@@ -61,6 +61,7 @@ export type LocalApplication = {
   match_explanation: string | null;
   match_strengths: unknown;
   match_risks: unknown;
+  match_dimensions?: unknown;
   status: string;
 };
 
@@ -298,6 +299,7 @@ export async function localInsertApplication(row: {
   match_explanation: string;
   match_strengths: unknown;
   match_risks: unknown;
+  match_dimensions?: unknown;
 }): Promise<InsertApplicationResult> {
   return enqueue(async () => {
     const store = await loadStore();
@@ -315,6 +317,7 @@ export async function localInsertApplication(row: {
       match_explanation: row.match_explanation,
       match_strengths: row.match_strengths,
       match_risks: row.match_risks,
+      match_dimensions: row.match_dimensions ?? null,
       status: "pending",
     });
     await saveStore(store);
@@ -402,9 +405,43 @@ export async function localListApplicationsForBrief(briefId: string): Promise<Ap
         cover_message: a.cover_message,
         match_strengths: a.match_strengths,
         match_risks: a.match_risks,
+        match_dimensions: a.match_dimensions ?? null,
         researchers: embed,
       };
     });
+  });
+}
+
+export async function localListApplicationsForResearcher(researcherId: string): Promise<
+  {
+    id: string;
+    brief_id: string;
+    status: string;
+    match_score: number | null;
+    match_explanation: string | null;
+    created_at: string | null;
+    briefs: { raw_input: unknown; final_content: unknown } | null;
+  }[]
+> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    return store.applications
+      .filter((a) => a.researcher_id === researcherId)
+      .sort((a, b) => (b.match_score ?? -1) - (a.match_score ?? -1))
+      .map((a) => {
+        const brief = store.briefs.find((b) => b.id === a.brief_id);
+        return {
+          id: a.id,
+          brief_id: a.brief_id,
+          status: a.status,
+          match_score: a.match_score,
+          match_explanation: a.match_explanation,
+          created_at: null,
+          briefs: brief
+            ? { raw_input: brief.raw_input, final_content: brief.final_content }
+            : null,
+        };
+      });
   });
 }
 

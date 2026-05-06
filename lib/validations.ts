@@ -58,7 +58,10 @@ export const researcherProjectInputSchema = z
   .object({
     title: z.string().trim().min(1, "Tytuł projektu jest wymagany"),
     description: z.string().trim().max(2000).optional().or(z.literal("")),
-    type: researcherProjectTypeSchema.optional(),
+    type: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      researcherProjectTypeSchema.optional()
+    ),
     year_from: z.number().int().min(1980).max(currentYear + 1).optional(),
     year_to: z.number().int().min(1980).max(currentYear + 5).optional(),
   })
@@ -151,7 +154,7 @@ export const applicationStatusSchema = z.enum(["pending", "shortlisted", "reject
 export const applicationSchema = z.object({
   brief_id: z.string().uuid(),
   researcher_id: z.string().uuid(),
-  match_score: z.number().min(0).max(1).optional(),
+  match_score: z.number().min(0).max(100).optional(),
   match_explanation: z.string().optional(),
   status: applicationStatusSchema.default("pending"),
 });
@@ -234,10 +237,56 @@ export const applicationSubmitSchema = z.object({
 export type ApplicationSubmitInput = z.infer<typeof applicationSubmitSchema>;
 
 /** Odpowiedź modelu dopasowania (JSON) */
+export const matchDimensionSchema = z.object({
+  score: z.number().min(0).max(100),
+  rationale: z.string(),
+});
+
 export const matchResponseSchema = z.object({
   score: z.number().min(0).max(100),
   explanation: z.string(),
   strengths: z.array(z.string()),
   risks: z.array(z.string()),
+  dimensions: z
+    .object({
+      domain_fit: matchDimensionSchema,
+      skills_fit: matchDimensionSchema,
+      availability_fit: matchDimensionSchema,
+      motivation_fit: matchDimensionSchema,
+    })
+    .optional(),
 });
 export type MatchResponse = z.infer<typeof matchResponseSchema>;
+
+export const profileBuilderProjectSchema = z.object({
+  title: z.string().trim().min(1).max(160),
+  description: z.string().trim().min(20).max(1200).optional().or(z.literal("")),
+  type: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    researcherProjectTypeSchema.optional()
+  ),
+  year_from: z.number().int().min(1980).max(currentYear + 1).optional(),
+  year_to: z.number().int().min(1980).max(currentYear + 5).optional(),
+});
+
+export const profileBuilderInputSchema = z.object({
+  rawText: z.string().trim().min(80, "Wklej co najmniej 80 znaków opisu profilu."),
+  stage: researcherStageSchema.optional(),
+  research_domain: researchDomainSchema.optional(),
+  publication_links: z
+    .array(z.string().trim().url("Podaj poprawny URL").or(z.literal("")))
+    .max(10)
+    .optional()
+    .transform((arr) => (arr ?? []).filter((u): u is string => Boolean(u && u.length > 0))),
+});
+export type ProfileBuilderInput = z.input<typeof profileBuilderInputSchema>;
+
+export const profileBuilderResponseSchema = z.object({
+  research_subdomain: z.string().trim().max(120).optional().or(z.literal("")),
+  research_description: z.string().trim().min(80).max(4000),
+  practical_skills: z.array(z.string().trim().min(1).max(80)).min(3).max(12),
+  projects: z.array(profileBuilderProjectSchema).min(1).max(4),
+  motivation: z.string().trim().min(100).max(600),
+  publication_links: z.array(z.string().trim().url()).max(10).optional().default([]),
+});
+export type ProfileBuilderResponse = z.infer<typeof profileBuilderResponseSchema>;

@@ -116,7 +116,7 @@ async function openAiCompatibleComplete(opts: {
   return content;
 }
 
-export type CompleteChatPurpose = "brief" | "match" | "ping";
+export type CompleteChatPurpose = "brief" | "match" | "profile" | "ping";
 
 /**
  * Jedna ścieżka dla generowania briefu, dopasowania i healthchecku.

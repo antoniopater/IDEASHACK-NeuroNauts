@@ -91,6 +91,7 @@ export default function NewBriefPage() {
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [successBriefId, setSuccessBriefId] = useState<string | null>(null);
+  const [successManageUrl, setSuccessManageUrl] = useState<string | null>(null);
 
   const runGenerate = useCallback(async () => {
     setGenError(null);
@@ -197,12 +198,19 @@ export default function NewBriefPage() {
           finalContent: brief,
         }),
       });
-      const data = (await res.json()) as { briefId?: string; error?: string };
+      const data = (await res.json()) as {
+        briefId?: string;
+        applicationsManageUrl?: string;
+        error?: string;
+      };
       if (!res.ok) {
         setPublishError(data.error || "Publikacja nie powiodła się.");
         return;
       }
-      if (data.briefId) setSuccessBriefId(data.briefId);
+      if (data.briefId) {
+        setSuccessBriefId(data.briefId);
+        setSuccessManageUrl(data.applicationsManageUrl ?? null);
+      }
     } catch {
       setPublishError("Błąd sieci. Spróbuj ponownie.");
     } finally {
@@ -228,6 +236,14 @@ export default function NewBriefPage() {
           >
             Zobacz brief
           </Link>
+          {successManageUrl ? (
+            <Link
+              href={successManageUrl}
+              className="ml-3 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors"
+            >
+              Zarządzaj aplikacjami
+            </Link>
+          ) : null}
         </div>
       </div>
     );

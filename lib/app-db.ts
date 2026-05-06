@@ -240,6 +240,7 @@ export async function dbInsertApplication(row: {
   match_explanation: string;
   match_strengths: unknown;
   match_risks: unknown;
+  match_dimensions?: unknown;
 }): Promise<{ id: string } | { error: { code: string }; message?: string }> {
   if (isLocalJsonDb()) {
     const res = await local.localInsertApplication(row);
@@ -257,6 +258,7 @@ export async function dbInsertApplication(row: {
       match_explanation: row.match_explanation,
       match_strengths: row.match_strengths,
       match_risks: row.match_risks,
+      match_dimensions: row.match_dimensions ?? null,
       status: "pending",
     })
     .select("id")
@@ -394,6 +396,7 @@ export async function dbListApplicationsForBrief(briefId: string): Promise<Appli
       cover_message,
       match_strengths,
       match_risks,
+      match_dimensions,
       researchers (
         id,
         first_name,
@@ -515,6 +518,32 @@ export async function dbListResearcherProjectsProfile(
     .eq("researcher_id", researcherId)
     .order("year_to", { ascending: false, nullsFirst: false });
   return (data ?? []) as ResearcherProjectProfileRow[];
+}
+
+export type ResearcherApplicationRow = {
+  id: string;
+  brief_id: string;
+  status: string;
+  match_score: number | null;
+  match_explanation: string | null;
+  created_at: string | null;
+  briefs: { raw_input: unknown; final_content: unknown } | { raw_input: unknown; final_content: unknown }[] | null;
+};
+
+export async function dbListApplicationsForResearcher(
+  researcherId: string
+): Promise<ResearcherApplicationRow[]> {
+  if (isLocalJsonDb()) {
+    return local.localListApplicationsForResearcher(researcherId);
+  }
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("applications")
+    .select("id, brief_id, status, match_score, match_explanation, created_at, briefs(raw_input, final_content)")
+    .eq("researcher_id", researcherId)
+    .order("created_at", { ascending: false });
+  if (error) return [];
+  return (data ?? []) as ResearcherApplicationRow[];
 }
 
 export async function dbHealthCheckLocal(): Promise<boolean> {

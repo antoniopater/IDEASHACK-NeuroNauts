@@ -10,7 +10,13 @@ export const MATCH_SYSTEM_PROMPT = `Oceniasz dopasowanie między projektem R&D a
   "score": <liczba 0-100>,
   "explanation": "<2-3 zdania po polsku: dlaczego ta osoba pasuje lub nie pasuje>",
   "strengths": ["<mocna strona 1>", "<mocna strona 2>"],
-  "risks": ["<potencjalne ryzyko lub luka>"]
+  "risks": ["<potencjalne ryzyko lub luka>"],
+  "dimensions": {
+    "domain_fit": { "score": <0-100>, "rationale": "<krótki powód>" },
+    "skills_fit": { "score": <0-100>, "rationale": "<krótki powód>" },
+    "availability_fit": { "score": <0-100>, "rationale": "<krótki powód>" },
+    "motivation_fit": { "score": <0-100>, "rationale": "<krótki powód>" }
+  }
 }
 
 Zasady oceny:

@@ -12,4 +12,7 @@ alter table public.applications
 alter table public.applications
   add column if not exists match_risks jsonb not null default '[]'::jsonb;
 
+alter table public.applications
+  add column if not exists match_dimensions jsonb;
+
 create index if not exists briefs_company_access_token_idx on public.briefs (company_access_token);

@@ -253,7 +253,7 @@ INSERT INTO public.researcher_projects (researcher_id, title, description, type,
 -- ─── APLIKACJE (3) ────────────────────────────────────────────────────────────
 
 INSERT INTO public.applications (
-  brief_id, researcher_id, cover_message, match_score, match_explanation, match_strengths, match_risks, status
+  brief_id, researcher_id, cover_message, match_score, match_explanation, match_strengths, match_risks, match_dimensions, status
 ) VALUES
 (
   'b0000000-0000-4000-b000-000000000001',
@@ -263,6 +263,7 @@ INSERT INTO public.applications (
   'Kamil bezpośrednio bada problem przypisywania zadań w systemach wieloagentowych — to dokładnie Vehicle Routing Problem opisany w briefie. Jego umiejętności z OR-Tools i algorytmami heurystycznymi są dokładnie tym, czego projekt wymaga.',
   '["Dopasowanie tematyczne do VRP i harmonogramowania w terenie","Praktyczne umiejętności implementacji w Pythonie i OR-Tools"]'::jsonb,
   '["Doktorant wcześniejszego roku — mniej projektów komercyjnych w skali 200+ techników"]'::jsonb,
+  '{"domain_fit":{"score":96,"rationale":"Profil i brief dotyczą optymalizacji zadań w terenie."},"skills_fit":{"score":92,"rationale":"OR-Tools, heurystyki i Python pokrywają wymagania briefu."},"availability_fit":{"score":85,"rationale":"20h tygodniowo wystarczy na POC w horyzoncie 1-3 miesięcy."},"motivation_fit":{"score":90,"rationale":"Motywacja wskazuje chęć walidacji badań na realnych danych."}}'::jsonb,
   'pending'
 ),
 (
@@ -273,6 +274,7 @@ INSERT INTO public.applications (
   'Idealne dopasowanie — Piotr obronił doktorat z detekcji defektów w materiałach kompozytowych metodami CV i ma doświadczenie z domain adaptation. Problem ze zmiennym oświetleniem to jego specjalność.',
   '["Silny track record CV i domain adaptation","Doświadczenie z danymi przemysłowymi z linii"]'::jsonb,
   '[]'::jsonb,
+  '{"domain_fit":{"score":100,"rationale":"Doktorat i brief dotyczą przemysłowej detekcji defektów."},"skills_fit":{"score":98,"rationale":"Computer vision, PyTorch i domain adaptation są centralne dla zadania."},"availability_fit":{"score":95,"rationale":"32h tygodniowo pozwala na intensywny POC."},"motivation_fit":{"score":94,"rationale":"Kandydat szuka projektów działających w produkcji."}}'::jsonb,
   'shortlisted'
 ),
 (
@@ -283,6 +285,7 @@ INSERT INTO public.applications (
   'Marta aktywnie pracuje z hydrożelami jako nośnikami biologicznymi i ma udokumentowane doświadczenie w przeglądach literatury farmaceutycznej. Jej profil pasuje niemal idealnie do zakresu briefu.',
   '["Bieżące badania nad hydrożelami","Doświadczenie w przeglądach pod kątem medtech/farma"]'::jsonb,
   '["Ograniczona dostępność tygodniowa względem pełnego etatu"]'::jsonb,
+  '{"domain_fit":{"score":96,"rationale":"Badania nad hydrożelami pokrywają temat briefu."},"skills_fit":{"score":93,"rationale":"Przegląd literatury i biomateriały odpowiadają zakresowi."},"availability_fit":{"score":78,"rationale":"16h tygodniowo jest dobre dla raportu, ale wymaga kontroli zakresu."},"motivation_fit":{"score":88,"rationale":"Motywacja jest silnie związana z medtech i farmaceutyką."}}'::jsonb,
   'pending'
 );
 
