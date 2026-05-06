@@ -7,6 +7,9 @@ create table if not exists public.companies (
   updated_at timestamptz not null default now()
 );
 
+alter table public.companies
+  add column if not exists updated_at timestamptz not null default now();
+
 -- Published / draft R&D briefs
 create table if not exists public.briefs (
   id uuid primary key default gen_random_uuid(),

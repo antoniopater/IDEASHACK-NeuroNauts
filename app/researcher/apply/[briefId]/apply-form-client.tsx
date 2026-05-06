@@ -3,6 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 
+type MatchDimensions = Record<string, { score: number; rationale: string }>;
+
+const dimensionLabels: Record<string, string> = {
+  domain_fit: "Dziedzina",
+  skills_fit: "Kompetencje",
+  availability_fit: "Dostępność",
+  motivation_fit: "Motywacja",
+};
+
 export default function ApplyFormClient({
   briefId,
 }: {
@@ -18,6 +27,7 @@ export default function ApplyFormClient({
     matchExplanation: string;
     strengths: string[];
     risks: string[];
+    dimensions?: MatchDimensions | null;
   } | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
@@ -49,6 +59,7 @@ export default function ApplyFormClient({
         matchExplanation?: string;
         strengths?: string[];
         risks?: string[];
+        dimensions?: MatchDimensions | null;
       };
       if (!res.ok) {
         setError(data.error || "Nie udało się wysłać aplikacji.");
@@ -65,6 +76,7 @@ export default function ApplyFormClient({
           matchExplanation: data.matchExplanation,
           strengths: data.strengths,
           risks: data.risks,
+          dimensions: data.dimensions ?? null,
         });
       }
     } catch {
@@ -87,6 +99,19 @@ export default function ApplyFormClient({
           </p>
           <p className="text-sm text-gray-800 leading-relaxed">{success.matchExplanation}</p>
         </div>
+        {success.dimensions ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            {Object.entries(success.dimensions).map(([key, value]) => (
+              <div key={key} className="rounded-lg border border-gray-200 bg-white p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium text-gray-900">{dimensionLabels[key] ?? key}</p>
+                  <span className="font-semibold text-indigo-700">{value.score}/100</span>
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-gray-600">{value.rationale}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div>
             <p className="font-medium text-emerald-800 mb-1">Mocne strony</p>

@@ -383,6 +383,24 @@
       "match_risks": [
         "Doktorant wcześniejszego roku — mniej projektów komercyjnych w skali 200+ techników"
       ],
+      "match_dimensions": {
+        "domain_fit": {
+          "score": 96,
+          "rationale": "Profil i brief dotyczą optymalizacji zadań w terenie."
+        },
+        "skills_fit": {
+          "score": 92,
+          "rationale": "OR-Tools, heurystyki i Python pokrywają wymagania briefu."
+        },
+        "availability_fit": {
+          "score": 85,
+          "rationale": "20h tygodniowo wystarczy na POC w horyzoncie 1-3 miesięcy."
+        },
+        "motivation_fit": {
+          "score": 90,
+          "rationale": "Motywacja wskazuje chęć walidacji badań na realnych danych."
+        }
+      },
       "status": "pending"
     },
     {
@@ -397,6 +415,24 @@
         "Doświadczenie z danymi przemysłowymi z linii"
       ],
       "match_risks": [],
+      "match_dimensions": {
+        "domain_fit": {
+          "score": 100,
+          "rationale": "Doktorat i brief dotyczą przemysłowej detekcji defektów."
+        },
+        "skills_fit": {
+          "score": 98,
+          "rationale": "Computer vision, PyTorch i domain adaptation są centralne dla zadania."
+        },
+        "availability_fit": {
+          "score": 95,
+          "rationale": "32h tygodniowo pozwala na intensywny POC."
+        },
+        "motivation_fit": {
+          "score": 94,
+          "rationale": "Kandydat szuka projektów działających w produkcji."
+        }
+      },
       "status": "shortlisted"
     },
     {
@@ -413,6 +449,24 @@
       "match_risks": [
         "Ograniczona dostępność tygodniowa względem pełnego etatu"
       ],
+      "match_dimensions": {
+        "domain_fit": {
+          "score": 96,
+          "rationale": "Badania nad hydrożelami pokrywają temat briefu."
+        },
+        "skills_fit": {
+          "score": 93,
+          "rationale": "Przegląd literatury i biomateriały odpowiadają zakresowi."
+        },
+        "availability_fit": {
+          "score": 78,
+          "rationale": "16h tygodniowo jest dobre dla raportu, ale wymaga kontroli zakresu."
+        },
+        "motivation_fit": {
+          "score": 88,
+          "rationale": "Motywacja jest silnie związana z medtech i farmaceutyką."
+        }
+      },
       "status": "pending"
     }
   ]

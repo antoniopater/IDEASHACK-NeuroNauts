@@ -32,7 +32,7 @@ Wtedy aplikacja czyta i zapisuje dane w pliku `data/local-db.json`.
 Jeśli chcesz wrócić do Supabase, ustaw w `.env.local`:
 - `USE_LOCAL_JSON_DB=false`
 
-#### LLM provider (briefy + dopasowanie)
+#### LLM provider (briefy + profile + dopasowanie)
 
 Projekt obsługuje jeden z backendów (auto-wybór po kluczach):
 - `GROQ_API_KEY` (Groq; OpenAI-compatible endpoint)
@@ -52,7 +52,7 @@ Możesz wymusić backend:
    - otwórz `supabase/seed.sql`
    - uruchom (seed robi `TRUNCATE`, więc czyści tabele aplikacji)
 
-Szczegóły modelu: tabele `companies`, `briefs`, `researchers`, `researcher_projects`, `applications` oraz pola `company_access_token`, `cover_message`, `match_strengths`, `match_risks` opisane są w migracjach.
+Szczegóły modelu: tabele `companies`, `briefs`, `researchers`, `researcher_projects`, `applications` oraz pola `company_access_token`, `cover_message`, `match_strengths`, `match_risks`, `match_dimensions` opisane są w migracjach.
 
 #### Tryb lokalny JSON (demo bez Supabase)
 
@@ -91,9 +91,10 @@ Odpowiedź JSON zawiera m.in.:
 - Landing, nawigacja, lista **opublikowanych briefów** z filtrami (`/briefs`)
 - Flow firmy: wieloetapowy formularz, generowanie briefu AI, publikacja (`/company/new-brief`)
 - **Token** w `company_access_token` i panel aplikacji dla firmy (`/company/briefs/[id]/applications?token=...`)
-- Rejestracja profilu badacza (`/researcher/register`) i publiczny profil (`/researcher/[id]`)
-- Aplikacja na brief z **oceną dopasowania** AI (`/researcher/apply/[briefId]`)
-- API: `/api/briefs/generate`, `/api/briefs/publish`, `/api/researcher/register`, `/api/applications/submit`, `/api/applications/status`, `/api/health`
+- Rejestracja profilu badacza (`/researcher/register`) z **AI Profile Builderem** i publiczny profil (`/researcher/[id]`)
+- Dashboard doktoranta (`/researcher/[id]/dashboard`) z klasyfikacją dorobku, rekomendowanymi briefami i aplikacjami
+- Aplikacja na brief z **wymiarową oceną dopasowania** AI (`/researcher/apply/[briefId]`)
+- API: `/api/briefs/generate`, `/api/briefs/publish`, `/api/researcher/profile-build`, `/api/researcher/register`, `/api/applications/submit`, `/api/applications/status`, `/api/health`
 
 ### What's NOT in v1
 

@@ -19,6 +19,7 @@ import {
   stageOptions,
 } from "@/lib/researcher-options";
 import {
+  type ProfileBuilderResponse,
   type ResearcherRegistrationInput,
   researcherRegistrationSchema,
 } from "@/lib/validations";
@@ -51,6 +52,9 @@ export default function ResearcherRegisterPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [profileSource, setProfileSource] = useState("");
+  const [profileBuildError, setProfileBuildError] = useState<string | null>(null);
+  const [profileBuildLoading, setProfileBuildLoading] = useState(false);
 
   const {
     register,
@@ -149,6 +153,70 @@ export default function ResearcherRegisterPage() {
     });
   }
 
+  function applyProfileSuggestion(profile: ProfileBuilderResponse) {
+    setValue("research_subdomain", profile.research_subdomain ?? "", {
+      shouldDirty: true,
+      shouldValidate: isSubmitted,
+    });
+    setValue("research_description", profile.research_description, {
+      shouldDirty: true,
+      shouldValidate: isSubmitted,
+    });
+    setValue("practical_skills", profile.practical_skills, {
+      shouldDirty: true,
+      shouldValidate: isSubmitted,
+    });
+    setValue("projects", profile.projects.map((p) => ({ ...emptyProject, ...p })), {
+      shouldDirty: true,
+      shouldValidate: isSubmitted,
+    });
+    setValue("motivation", profile.motivation, {
+      shouldDirty: true,
+      shouldValidate: isSubmitted,
+    });
+    setValue("publication_links", profile.publication_links.length > 0 ? profile.publication_links : [""], {
+      shouldDirty: true,
+      shouldValidate: isSubmitted,
+    });
+  }
+
+  async function runProfileBuilder() {
+    setProfileBuildError(null);
+    if (profileSource.trim().length < 80) {
+      setProfileBuildError("Wklej co najmniej 80 znaków opisu, CV albo notatek.");
+      return;
+    }
+    setProfileBuildLoading(true);
+    try {
+      const currentLinks = (getValues("publication_links") ?? []).filter(
+        (u): u is string => typeof u === "string" && u.trim().length > 0
+      );
+      const res = await fetch("/api/researcher/profile-build", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rawText: profileSource.trim(),
+          stage: getValues("stage"),
+          research_domain: getValues("research_domain"),
+          publication_links: currentLinks,
+        }),
+      });
+      const data = (await res.json()) as {
+        profile?: ProfileBuilderResponse;
+        error?: string;
+      };
+      if (!res.ok || !data.profile) {
+        setProfileBuildError(data.error || "Nie udało się zbudować profilu.");
+        return;
+      }
+      applyProfileSuggestion(data.profile);
+    } catch {
+      setProfileBuildError("Błąd sieci. Spróbuj ponownie.");
+    } finally {
+      setProfileBuildLoading(false);
+    }
+  }
+
   async function onSubmit(values: FormValues) {
     setServerError(null);
     setSubmitting(true);
@@ -171,7 +239,7 @@ export default function ResearcherRegisterPage() {
         return;
       }
       if (data.researcherId) {
-        router.push(`/researcher/${data.researcherId}`);
+        router.push(`/researcher/${data.researcherId}/dashboard`);
       }
     } catch {
       setServerError("Błąd sieci. Spróbuj ponownie.");
@@ -216,6 +284,39 @@ export default function ResearcherRegisterPage() {
           className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm"
           noValidate
         >
+          <section className="mb-8 rounded-xl border border-indigo-100 bg-indigo-50/60 p-5">
+            <h2 className="text-base font-semibold text-gray-900">AI Profile Builder</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Wklej opis badań, fragment CV, abstrakt pracy albo notatki. AI przełoży je na pola
+              profilu, które możesz potem ręcznie poprawić.
+            </p>
+            <textarea
+              rows={6}
+              value={profileSource}
+              onChange={(e) => setProfileSource(e.target.value)}
+              placeholder="Np. badam optymalizację tras serwisowych, pracowałem/am z OR-Tools i Pythonem..."
+              className={`${inputClass} mt-4 bg-white`}
+            />
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-gray-500">
+                {profileSource.trim().length}/80 znaków minimum
+              </p>
+              <button
+                type="button"
+                onClick={runProfileBuilder}
+                disabled={profileBuildLoading}
+                className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {profileBuildLoading ? "Buduję profil..." : "Uzupełnij formularz AI"}
+              </button>
+            </div>
+            {profileBuildError ? (
+              <p className="mt-3 text-sm text-red-600" role="alert">
+                {profileBuildError}
+              </p>
+            ) : null}
+          </section>
+
           {/* SECTION 1: Dane podstawowe */}
           <h2 className={sectionHeaderClass + " !mt-0 !border-t-0 !pt-0"}>
             Dane podstawowe

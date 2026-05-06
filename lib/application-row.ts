@@ -16,5 +16,6 @@ export type ApplicationRow = {
   cover_message: string | null;
   match_strengths: unknown;
   match_risks: unknown;
+  match_dimensions: unknown;
   researchers: ApplicationResearcherEmbed | ApplicationResearcherEmbed[] | null;
 };

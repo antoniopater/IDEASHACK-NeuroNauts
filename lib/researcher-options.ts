@@ -32,6 +32,7 @@ export const researchDomainOptions: ResearchDomain[] = [
 
 export const projectTypeOptions: { value: ResearcherProjectType; label: string }[] = [
   { value: "research", label: "Projekt badawczy" },
+  { value: "industry", label: "Współpraca z firmą" },
   { value: "internship", label: "Staż w firmie" },
   { value: "consultation", label: "Zlecenie/konsultacja" },
   { value: "student_circle", label: "Koło naukowe" },

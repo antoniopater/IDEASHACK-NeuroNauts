@@ -7,6 +7,7 @@ import {
   stageLabel,
 } from "@/lib/researcher-options";
 import { dbGetResearcherProfile, dbListResearcherProjectsProfile } from "@/lib/app-db";
+import { classifyResearcher } from "@/lib/researcher-classification";
 import type {
   AvailabilityMode,
   ResearcherProjectType,
@@ -77,6 +78,13 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
   const publications = (r.publication_links ?? []).filter(
     (u) => typeof u === "string" && u.length > 0
   );
+  const classification = classifyResearcher({
+    stage: r.stage,
+    research_description: r.research_description,
+    practical_skills: skills,
+    publication_links: publications,
+    projects,
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] py-10 px-4">
@@ -118,6 +126,33 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
               className={`h-full rounded-full transition-all ${completenessTone}`}
               style={{ width: `${Math.max(0, Math.min(100, completeness))}%` }}
             />
+          </div>
+        </section>
+
+        <section className="mb-8 rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">
+                Klasyfikacja dorobku
+              </p>
+              <h2 className="mt-1 text-base font-semibold text-gray-900">
+                {classification.label}
+              </h2>
+              <p className="mt-1 text-sm text-gray-700">{classification.summary}</p>
+            </div>
+            <span className="shrink-0 rounded-full bg-white px-3 py-1 text-sm font-semibold text-indigo-700">
+              {classification.score}/100
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {classification.signals.slice(0, 4).map((signal) => (
+              <span
+                key={signal}
+                className="rounded-full border border-indigo-100 bg-white px-2.5 py-0.5 text-xs text-gray-700"
+              >
+                {signal}
+              </span>
+            ))}
           </div>
         </section>
 
@@ -237,8 +272,14 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
 
         <div className="mt-10 pt-8 border-t border-gray-200 flex flex-wrap gap-3">
           <Link
-            href="/briefs"
+            href={`/researcher/${r.id}/dashboard`}
             className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+          >
+            Otwórz dashboard
+          </Link>
+          <Link
+            href="/briefs"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors"
           >
             Przeglądaj briefy R&D
           </Link>

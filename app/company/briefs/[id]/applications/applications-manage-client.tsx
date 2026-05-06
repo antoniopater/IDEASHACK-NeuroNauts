@@ -16,6 +16,28 @@ function asStringArray(v: unknown): string[] {
   return v.filter((x): x is string => typeof x === "string");
 }
 
+function asDimensions(v: unknown): [string, { score: number; rationale: string }][] {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return [];
+  return Object.entries(v as Record<string, unknown>).filter(
+    (entry): entry is [string, { score: number; rationale: string }] => {
+      const value = entry[1];
+      return (
+        Boolean(value) &&
+        typeof value === "object" &&
+        typeof (value as { score?: unknown }).score === "number" &&
+        typeof (value as { rationale?: unknown }).rationale === "string"
+      );
+    }
+  );
+}
+
+const dimensionLabels: Record<string, string> = {
+  domain_fit: "Dziedzina",
+  skills_fit: "Kompetencje",
+  availability_fit: "Dostępność",
+  motivation_fit: "Motywacja",
+};
+
 function stageLabel(stage: string): string {
   if (stage === "doktorant") return "Doktorant";
   if (stage === "ktor" || stage === "doktor") return "Kandydat na doktoranta";
@@ -111,6 +133,7 @@ export default function ApplicationsManageClient({
             const score = Math.round(app.match_score ?? 0);
             const strengths = asStringArray(app.match_strengths);
             const risks = asStringArray(app.match_risks);
+            const dimensions = asDimensions(app.match_dimensions);
             const hours = res?.availability_hours_per_week;
             const modes = res?.availability_modes?.length
               ? res.availability_modes.join(", ")
@@ -157,6 +180,26 @@ export default function ApplicationsManageClient({
                 <p className="text-sm text-gray-800 mt-4 leading-relaxed">
                   {app.match_explanation ?? "—"}
                 </p>
+
+                {dimensions.length > 0 ? (
+                  <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
+                    {dimensions.map(([key, value]) => (
+                      <div key={key} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold text-gray-700">
+                            {dimensionLabels[key] ?? key}
+                          </p>
+                          <span className="text-xs font-semibold text-indigo-700">
+                            {value.score}/100
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                          {value.rationale}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>

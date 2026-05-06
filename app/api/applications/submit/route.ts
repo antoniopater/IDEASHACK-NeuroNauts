@@ -135,6 +135,7 @@ export async function POST(req: Request) {
     match_explanation: match.explanation,
     match_strengths: match.strengths,
     match_risks: match.risks,
+    match_dimensions: match.dimensions ?? null,
   });
 
   if ("error" in inserted) {
@@ -153,5 +154,6 @@ export async function POST(req: Request) {
     matchExplanation: match.explanation,
     strengths: match.strengths,
     risks: match.risks,
+    dimensions: match.dimensions ?? null,
   });
 }
