@@ -15,8 +15,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "RD Bridge",
-  description: "Łączymy firmy z badaczami na projekty R&D.",
+  title: "Nexdoc — R&D dla nauki i biznesu",
+  description: "Nexdoc łączy firmy szukające wsparcia R&D z doktorantami i młodymi badaczami. AI dopasowuje profile, briefy tworzy się w minuty.",
 };
 
 export default function RootLayout({

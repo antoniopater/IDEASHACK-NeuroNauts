@@ -5,8 +5,8 @@ import { hasSupabasePublicConfig } from "@/lib/server-env";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Briefy R&D | RD Bridge",
-  description: "Lista opublikowanych briefów badawczych.",
+  title: "R&D Briefs | Nexdoc",
+  description: "Published R&D briefs.",
 };
 
 export default async function BriefsPage() {

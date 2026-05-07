@@ -1,5 +1,6 @@
 import {
   dbFindApplication,
+  dbGetBriefForCompany,
   dbUpdateApplicationStatus,
   dbVerifyBriefToken,
 } from "@/lib/app-db";
@@ -9,11 +10,12 @@ import {
 } from "@/lib/server-env";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getCurrentUser } from "@/lib/auth-session";
 
 const bodySchema = z.object({
   applicationId: z.string().uuid(),
   briefId: z.string().uuid(),
-  token: z.string().min(16),
+  token: z.string().min(16).optional(),
   status: z.enum(["pending", "shortlisted", "rejected"]),
 });
 
@@ -37,8 +39,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: SUPABASE_SERVICE_MISSING_MESSAGE }, { status: 500 });
   }
 
-  const tokenOk = await dbVerifyBriefToken(briefId, token);
-  if (!tokenOk) {
+  let authorized = false;
+  if (token) {
+    authorized = await dbVerifyBriefToken(briefId, token);
+  }
+  if (!authorized) {
+    const user = await getCurrentUser();
+    if (user?.role === "company" && user.company_id) {
+      const brief = await dbGetBriefForCompany(briefId);
+      authorized = Boolean(brief?.company_id && brief.company_id === user.company_id);
+    }
+  }
+
+  if (!authorized) {
     return NextResponse.json({ error: "Brak uprawnień lub nieprawidłowy link." }, { status: 403 });
   }
 

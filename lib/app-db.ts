@@ -10,6 +10,19 @@ import type {
   ResearcherStage,
 } from "@/lib/validations";
 
+export type AppUserRole = "company" | "researcher";
+
+export type AppUserRow = {
+  id: string;
+  email: string;
+  password_hash: string;
+  role: AppUserRole;
+  institution_name: string | null;
+  institution_verified: boolean;
+  company_id: string | null;
+  researcher_id: string | null;
+};
+
 /** Wiersze jak z Supabase dla /briefs i strony głównej. */
 export type BriefListRow = {
   id: string;
@@ -144,6 +157,84 @@ export async function dbPublishBrief(args: {
     briefId: brief.id as string,
     accessToken,
   };
+}
+
+export async function dbCreateUser(args: {
+  email: string;
+  passwordHash: string;
+  role: AppUserRole;
+  institutionName: string | null;
+  institutionVerified: boolean;
+}): Promise<{ userId: string } | { error: { code?: string; message?: string } }> {
+  if (isLocalJsonDb()) {
+    const res = await local.localCreateUser(args);
+    if (!res.ok) return { error: { code: res.code } };
+    return { userId: res.userId };
+  }
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("app_users")
+    .insert({
+      email: args.email.trim().toLowerCase(),
+      password_hash: args.passwordHash,
+      role: args.role,
+      institution_name: args.institutionName,
+      institution_verified: args.institutionVerified,
+    })
+    .select("id")
+    .single();
+  if (error || !data) return { error: { code: error?.code, message: error?.message } };
+  return { userId: data.id as string };
+}
+
+export async function dbGetUserByEmail(email: string): Promise<AppUserRow | null> {
+  if (isLocalJsonDb()) {
+    return (await local.localGetUserByEmail(email)) as AppUserRow | null;
+  }
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("app_users")
+    .select(
+      "id, email, password_hash, role, institution_name, institution_verified, company_id, researcher_id"
+    )
+    .eq("email", email.trim().toLowerCase())
+    .maybeSingle();
+  if (error || !data) return null;
+  return data as AppUserRow;
+}
+
+export async function dbGetUserById(userId: string): Promise<AppUserRow | null> {
+  if (isLocalJsonDb()) {
+    return (await local.localGetUserById(userId)) as AppUserRow | null;
+  }
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("app_users")
+    .select(
+      "id, email, password_hash, role, institution_name, institution_verified, company_id, researcher_id"
+    )
+    .eq("id", userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data as AppUserRow;
+}
+
+export async function dbLinkUserResearcher(userId: string, researcherId: string): Promise<void> {
+  if (isLocalJsonDb()) {
+    await local.localLinkUserResearcher(userId, researcherId);
+    return;
+  }
+  const supabase = createSupabaseServiceRoleClient();
+  await supabase.from("app_users").update({ researcher_id: researcherId }).eq("id", userId);
+}
+
+export async function dbLinkUserCompany(userId: string, companyId: string): Promise<void> {
+  if (isLocalJsonDb()) {
+    await local.localLinkUserCompany(userId, companyId);
+    return;
+  }
+  const supabase = createSupabaseServiceRoleClient();
+  await supabase.from("app_users").update({ company_id: companyId }).eq("id", userId);
 }
 
 export type ResearcherSubmitRow = {
@@ -360,6 +451,7 @@ export async function dbRegisterResearcher(
 
 export async function dbGetBriefForCompany(briefId: string): Promise<{
   id: string;
+  company_id?: string;
   company_access_token: string | null;
   final_content: unknown;
 } | null> {
@@ -369,12 +461,13 @@ export async function dbGetBriefForCompany(briefId: string): Promise<{
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("briefs")
-    .select("id, company_access_token, final_content")
+    .select("id, company_id, company_access_token, final_content")
     .eq("id", briefId)
     .maybeSingle();
   if (error || !data) return null;
   return data as {
     id: string;
+    company_id?: string;
     company_access_token: string | null;
     final_content: unknown;
   };

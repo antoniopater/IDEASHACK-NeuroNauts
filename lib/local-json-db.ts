@@ -65,12 +65,27 @@ export type LocalApplication = {
   status: string;
 };
 
+export type LocalUserRole = "company" | "researcher";
+
+export type LocalUser = {
+  id: string;
+  email: string;
+  password_hash: string;
+  role: LocalUserRole;
+  institution_name: string | null;
+  institution_verified: boolean;
+  company_id: string | null;
+  researcher_id: string | null;
+  created_at: string;
+};
+
 type Store = {
   companies: LocalCompany[];
   briefs: LocalBrief[];
   researchers: LocalResearcher[];
   researcher_projects: LocalResearcherProject[];
   applications: LocalApplication[];
+  users: LocalUser[];
 };
 
 function emptyStore(): Store {
@@ -80,6 +95,7 @@ function emptyStore(): Store {
     researchers: [],
     researcher_projects: [],
     applications: [],
+    users: [],
   };
 }
 
@@ -94,6 +110,7 @@ function normalizeStore(raw: unknown): Store {
       ? (o.researcher_projects as LocalResearcherProject[])
       : [],
     applications: Array.isArray(o.applications) ? (o.applications as LocalApplication[]) : [],
+    users: Array.isArray(o.users) ? (o.users as LocalUser[]) : [],
   };
 }
 
@@ -253,6 +270,73 @@ export async function localGetResearcherByEmail(
   });
 }
 
+export async function localCreateUser(args: {
+  email: string;
+  passwordHash: string;
+  role: LocalUserRole;
+  institutionName: string | null;
+  institutionVerified: boolean;
+}): Promise<{ ok: true; userId: string } | { ok: false; code: "23505" }> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    const email = args.email.trim().toLowerCase();
+    if (store.users.some((u) => u.email === email)) {
+      return { ok: false, code: "23505" };
+    }
+    const now = new Date().toISOString();
+    const user: LocalUser = {
+      id: randomUUID(),
+      email,
+      password_hash: args.passwordHash,
+      role: args.role,
+      institution_name: args.institutionName,
+      institution_verified: args.institutionVerified,
+      company_id: null,
+      researcher_id: null,
+      created_at: now,
+    };
+    store.users.push(user);
+    await saveStore(store);
+    return { ok: true, userId: user.id };
+  });
+}
+
+export async function localGetUserByEmail(email: string): Promise<LocalUser | null> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    return store.users.find((u) => u.email === email.trim().toLowerCase()) ?? null;
+  });
+}
+
+export async function localGetUserById(id: string): Promise<LocalUser | null> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    return store.users.find((u) => u.id === id) ?? null;
+  });
+}
+
+export async function localLinkUserResearcher(userId: string, researcherId: string): Promise<void> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    const user = store.users.find((u) => u.id === userId);
+    if (user) {
+      user.researcher_id = researcherId;
+    }
+    await saveStore(store);
+  });
+}
+
+export async function localLinkUserCompany(userId: string, companyId: string): Promise<void> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    const user = store.users.find((u) => u.id === userId);
+    if (user) {
+      user.company_id = companyId;
+    }
+    await saveStore(store);
+  });
+}
+
 export async function localGetBriefForSubmit(
   briefId: string
 ): Promise<Pick<LocalBrief, "id" | "status" | "raw_input" | "final_content"> | null> {
@@ -364,13 +448,14 @@ export async function localRegisterResearcher(args: {
 
 export async function localGetBriefForCompanyDashboard(
   briefId: string
-): Promise<Pick<LocalBrief, "id" | "company_access_token" | "final_content"> | null> {
+): Promise<Pick<LocalBrief, "id" | "company_id" | "company_access_token" | "final_content"> | null> {
   return enqueue(async () => {
     const store = await loadStore();
     const b = store.briefs.find((x) => x.id === briefId);
     if (!b) return null;
     return {
       id: b.id,
+      company_id: b.company_id,
       company_access_token: b.company_access_token,
       final_content: b.final_content,
     };
@@ -496,5 +581,14 @@ export async function localListResearcherProjectsProfile(
     return store.researcher_projects
       .filter((p) => p.researcher_id === researcherId)
       .sort((a, b) => (b.year_to ?? 0) - (a.year_to ?? 0));
+  });
+}
+
+export async function localGetAllResearchers(): Promise<LocalResearcher[]> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    return [...store.researchers].sort((a, b) =>
+      (b.profile_completeness ?? 0) - (a.profile_completeness ?? 0)
+    );
   });
 }

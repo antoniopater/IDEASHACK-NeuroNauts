@@ -6,8 +6,24 @@ import {
 } from "@/lib/server-env";
 import { researcherRegistrationSchema } from "@/lib/validations";
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth-session";
+import { dbLinkUserResearcher } from "@/lib/app-db";
 
 export async function POST(req: Request) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Musisz byc zalogowany jako badacz." }, { status: 401 });
+  }
+  if (user.role !== "researcher") {
+    return NextResponse.json({ error: "To konto nie ma uprawnien badacza." }, { status: 403 });
+  }
+  if (!user.institution_verified) {
+    return NextResponse.json(
+      { error: "Konto badacza wymaga potwierdzenia afiliacji uczelnianej." },
+      { status: 403 }
+    );
+  }
+
   let json: unknown;
   try {
     json = await req.json();
@@ -36,6 +52,12 @@ export async function POST(req: Request) {
   }
 
   const data = parsed.data;
+  if (data.email.trim().toLowerCase() !== user.email.trim().toLowerCase()) {
+    return NextResponse.json(
+      { error: "E-mail w formularzu musi byc zgodny z e-mailem konta." },
+      { status: 400 }
+    );
+  }
   const completeness = calculateProfileCompleteness({
     first_name: data.first_name,
     last_name: data.last_name,
@@ -65,6 +87,8 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+
+  await dbLinkUserResearcher(user.id, result.researcherId);
 
   return NextResponse.json({
     researcherId: result.researcherId,

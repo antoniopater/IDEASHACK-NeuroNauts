@@ -17,7 +17,6 @@ export default function ApplyFormClient({
 }: {
   briefId: string;
 }) {
-  const [email, setEmail] = useState("");
   const [coverMessage, setCoverMessage] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +47,6 @@ export default function ApplyFormClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           briefId,
-          researcherEmail: email.trim(),
           coverMessage: coverMessage.trim(),
           confirmed: true,
         }),
@@ -155,22 +153,6 @@ export default function ApplyFormClient({
           {error}
         </p>
       ) : null}
-
-      <div>
-        <label htmlFor="re-email" className="block text-sm font-medium text-gray-700 mb-1">
-          E-mail (profil badacza) <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="re-email"
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={inputClass}
-          placeholder="jan.kowalski@uniwersytet.pl"
-        />
-      </div>
 
       <div>
         <label htmlFor="cover" className="block text-sm font-medium text-gray-700 mb-1">

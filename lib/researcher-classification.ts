@@ -25,10 +25,10 @@ export type ResearcherClassification = {
 };
 
 const labels: Record<ResearcherClassificationTier, string> = {
-  early_builder: "Budujący profil praktyczny",
-  applied_researcher: "Badacz aplikacyjny",
-  industry_ready: "Gotowy do współpracy z firmą",
-  deep_expert: "Ekspert głębokiej specjalizacji",
+  early_builder: "Building practical profile",
+  applied_researcher: "Applied researcher",
+  industry_ready: "Industry-ready",
+  deep_expert: "Deep domain expert",
 };
 
 export function classifyResearcher(
@@ -47,39 +47,39 @@ export function classifyResearcher(
 
   if (skills.length >= 6) {
     score += 25;
-    signals.push("szeroki zestaw umiejętności praktycznych");
+    signals.push("broad set of practical skills");
   } else if (skills.length >= 3) {
     score += 15;
-    signals.push("minimum 3 praktyczne umiejętności");
+    signals.push("at least 3 practical skills");
   }
 
   if (projects.length >= 3) {
     score += 20;
-    signals.push("kilka opisanych projektów");
+    signals.push("multiple described projects");
   } else if (projects.length >= 1) {
     score += 10;
-    signals.push("opisany projekt badawczy lub wdrożeniowy");
+    signals.push("research or industry project on record");
   }
 
   if (industryProjects.length > 0) {
     score += 20;
-    signals.push("doświadczenie blisko zastosowań biznesowych");
+    signals.push("experience close to business applications");
   }
 
   if (publications.length >= 2) {
     score += 20;
-    signals.push("potwierdzony dorobek publikacyjny");
+    signals.push("verified publication record");
   } else if (publications.length === 1) {
     score += 10;
-    signals.push("pierwszy link do publikacji lub profilu naukowego");
+    signals.push("first publication or academic profile link");
   }
 
   if (descriptionLength >= 600) {
     score += 15;
-    signals.push("dobrze opisany kontekst badań");
+    signals.push("well-described research context");
   } else if (descriptionLength >= 150) {
     score += 10;
-    signals.push("czytelny opis badań");
+    signals.push("clear research description");
   }
 
   const stage = input.stage ?? "";
@@ -94,13 +94,13 @@ export function classifyResearcher(
 
   const summaryByTier: Record<ResearcherClassificationTier, string> = {
     early_builder:
-      "Profil ma potencjał, ale największą wartość da doprecyzowanie projektów, umiejętności i dostępności.",
+      "Profile has potential — the biggest gains come from detailing projects, skills and availability.",
     applied_researcher:
-      "Profil dobrze nadaje się do przeglądów literatury, konsultacji i małych zadań R&D.",
+      "Profile is well-suited for literature reviews, consultations and small R&D tasks.",
     industry_ready:
-      "Profil wygląda na gotowy do rozmów z firmami o proof-of-concept lub krótkim projekcie R&D.",
+      "Profile looks ready for company conversations about proof-of-concept or a short R&D engagement.",
     deep_expert:
-      "Profil pokazuje głęboką specjalizację i dorobek, który warto kierować do bardziej złożonych briefów.",
+      "Profile shows deep specialisation and a track record — best matched to complex R&D briefs.",
   };
 
   return {
@@ -108,6 +108,6 @@ export function classifyResearcher(
     label: labels[tier],
     summary: summaryByTier[tier],
     score: Math.min(100, score),
-    signals: signals.length > 0 ? signals : ["uzupełnij profil, aby zobaczyć mocniejsze sygnały"],
+    signals: signals.length > 0 ? signals : ["complete your profile to see stronger signals"],
   };
 }

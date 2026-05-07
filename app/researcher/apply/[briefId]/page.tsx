@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ApplyFormClient from "./apply-form-client";
+import { requireUser } from "@/lib/auth-session";
 
 type Raw = { industry?: string; timeline?: string; budget?: string };
 
@@ -17,10 +18,11 @@ export async function generateMetadata({
   const data = await dbGetPublicBrief(briefId);
   const parsed = data?.final_content ? aiBriefResponseSchema.safeParse(data.final_content) : null;
   const title = parsed?.success ? deriveBriefTitle(parsed.data.cel_rd) : "Aplikacja";
-  return { title: `Aplikuj: ${title} | RD Bridge` };
+  return { title: `Aplikuj: ${title} | Nexdoc` };
 }
 
 export default async function ApplyPage({ params }: { params: Promise<{ briefId: string }> }) {
+  await requireUser("researcher");
   const { briefId } = await params;
   const data = await dbGetPublicBrief(briefId);
 

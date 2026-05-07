@@ -1,17 +1,17 @@
 /** Timeline values saved from the company brief form */
 export const TIMELINE_VALUES = [
-  "1–4 tygodnie",
-  "1–3 miesiące",
-  "3–6 miesięcy",
-  "6–12 miesięcy",
+  "1-4 weeks",
+  "1-3 months",
+  "3-6 months",
+  "6-12 months",
 ] as const;
 
 export type TimelineFilterId = "all" | "lt1m" | "1to3m" | "gt3m";
 
 const TIMELINE_BUCKETS: Record<Exclude<TimelineFilterId, "all">, readonly string[]> = {
-  lt1m: ["1–4 tygodnie"],
-  "1to3m": ["1–3 miesiące"],
-  gt3m: ["3–6 miesięcy", "6–12 miesięcy"],
+  lt1m: ["1-4 weeks"],
+  "1to3m": ["1-3 months"],
+  gt3m: ["3-6 months", "6-12 months"],
 };
 
 export function timelineMatchesFilter(timeline: string, filter: TimelineFilterId): boolean {
@@ -22,12 +22,12 @@ export function timelineMatchesFilter(timeline: string, filter: TimelineFilterId
 
 export type BudgetFilterId = "all" | "lte20k" | "gt20k";
 
-const BUDGET_LTE20K = new Set(["Do 5 000 zł", "5 000–20 000 zł"]);
-const BUDGET_GT20K = new Set(["20 000–50 000 zł", "Powyżej 50 000 zł"]);
+const BUDGET_LTE20K = new Set(["Under PLN 5,000", "PLN 5,000-20,000"]);
+const BUDGET_GT20K = new Set(["PLN 20,000-50,000", "Over PLN 50,000"]);
 
 export function budgetMatchesFilter(budget: string, filter: BudgetFilterId): boolean {
   if (filter === "all") return true;
-  if (budget === "Do ustalenia") return false;
+  if (budget === "Open to discuss") return false;
   if (filter === "lte20k") return BUDGET_LTE20K.has(budget);
   return BUDGET_GT20K.has(budget);
 }

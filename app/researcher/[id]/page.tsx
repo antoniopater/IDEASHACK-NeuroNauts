@@ -8,6 +8,7 @@ import {
 } from "@/lib/researcher-options";
 import { dbGetResearcherProfile, dbListResearcherProjectsProfile } from "@/lib/app-db";
 import { classifyResearcher } from "@/lib/researcher-classification";
+import { HexRadar } from "@/components/shared/hex-radar";
 import type {
   AvailabilityMode,
   ResearcherProjectType,
@@ -46,10 +47,10 @@ type PageProps = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const data = await dbGetResearcherProfile(id);
-  if (!data) return { title: "Profil badacza | RD Bridge" };
+  if (!data) return { title: "Researcher profile | Nexdoc" };
   return {
-    title: `${data.first_name} ${data.last_name} — ${data.institution} | RD Bridge`,
-    description: "Profil badacza w platformie R&D Bridge.",
+    title: `${data.first_name} ${data.last_name} - ${data.institution} | Nexdoc`,
+    description: "Researcher profile on Nexdoc - R&D platform for science and business.",
   };
 }
 
@@ -88,6 +89,18 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
     projects,
   });
 
+  const industryProjects = projects.filter((p) =>
+    ["industry", "consultation", "internship"].includes(p.type ?? "")
+  );
+  const hexDimensions = [
+    { label: "Skills", value: Math.min(100, Math.round((skills.length / 8) * 100)) },
+    { label: "Projects", value: Math.min(100, Math.round((projects.length / 4) * 100)) },
+    { label: "Publications", value: Math.min(100, Math.round((publications.length / 3) * 100)) },
+    { label: "Industry exp.", value: Math.min(100, Math.round((industryProjects.length / 2) * 100)) },
+    { label: "Availability", value: Math.min(100, Math.round(((r.availability_hours_per_week ?? 0) / 20) * 100)) },
+    { label: "Research depth", value: Math.min(100, Math.round(((r.research_description ?? "").trim().length / 800) * 100)) },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] py-10 px-4">
       <article className="max-w-3xl mx-auto rounded-xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm">
@@ -99,7 +112,7 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
           <div className="flex flex-wrap gap-2 mt-4">
             <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
               {stageLabel[r.stage] ?? r.stage}
-              {r.phd_start_year ? ` · od ${r.phd_start_year}` : ""}
+              {r.phd_start_year ? ` · since ${r.phd_start_year}` : ""}
             </span>
             {r.research_domain ? (
               <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs text-gray-700">
@@ -117,7 +130,7 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
         <section className="mb-8 rounded-lg border border-gray-200 bg-gray-50 p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-              Kompletność profilu
+              Profile completeness
             </span>
             <span className="text-sm font-semibold text-gray-900">
               {completeness}%
@@ -135,7 +148,7 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">
-                Klasyfikacja dorobku
+                Achievement classification
               </p>
               <h2 className="mt-1 text-base font-semibold text-gray-900">
                 {classification.label}
@@ -158,11 +171,26 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
           </div>
         </section>
 
+        <section className="mb-8 rounded-xl border border-gray-200 bg-gray-50 p-5">
+          <h2 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-4 text-center">
+            Competency profile
+          </h2>
+          <HexRadar data={hexDimensions} />
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            {hexDimensions.map((d) => (
+              <div key={d.label} className="text-center">
+                <div className="text-xs font-medium text-gray-500">{d.label}</div>
+                <div className="text-sm font-semibold text-indigo-600">{d.value}%</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <div className="space-y-8 text-gray-800 text-sm sm:text-base leading-relaxed">
           {r.research_description ? (
             <section>
               <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">
-                Czym się zajmuje
+                Research focus
               </h2>
               <p className="whitespace-pre-wrap">{r.research_description}</p>
             </section>
@@ -171,7 +199,7 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
           {skills.length > 0 ? (
             <section>
               <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">
-                Umiejętności praktyczne
+                Practical skills
               </h2>
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill, idx) => (
@@ -189,7 +217,7 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
           {projects.length > 0 ? (
             <section>
               <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">
-                Projekty i doświadczenie
+                Projects & experience
               </h2>
               <ul className="space-y-3">
                 {projects.map((p) => (
@@ -223,8 +251,8 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
             </h2>
             <p className="text-gray-700">
               {r.availability_hours_per_week
-                ? `${r.availability_hours_per_week} godz./tydzień`
-                : "Dostępność nieuzupełniona"}
+                ? `${r.availability_hours_per_week} h/week`
+                : "Availability not specified"}
             </p>
             {modes.length > 0 ? (
               <div className="flex flex-wrap gap-2 mt-2">
@@ -243,7 +271,7 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
           {r.motivation ? (
             <section className="rounded-xl border border-gray-200 bg-gray-50 p-5">
               <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">
-                Motywacja
+                Motivation
               </h2>
               <p className="whitespace-pre-wrap text-gray-700">{r.motivation}</p>
             </section>
@@ -277,19 +305,19 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
             href={`/researcher/${r.id}/dashboard`}
             className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
           >
-            Otwórz dashboard
+            Open dashboard
           </Link>
           <Link
             href="/briefs"
             className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors"
           >
-            Przeglądaj briefy R&D
+            Browse R&D briefs
           </Link>
           <Link
             href="/"
             className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors"
           >
-            Wróć na stronę główną
+            Back to homepage
           </Link>
         </div>
       </article>

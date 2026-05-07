@@ -1,16 +1,25 @@
 import { NextResponse } from "next/server";
 import { publishBriefBodySchema } from "@/lib/brief-schema";
-import { dbPublishBrief } from "@/lib/app-db";
+import { dbLinkUserCompany, dbPublishBrief } from "@/lib/app-db";
 import {
   hasSupabaseServiceConfig,
   SUPABASE_SERVICE_MISSING_MESSAGE,
 } from "@/lib/server-env";
+import { getCurrentUser } from "@/lib/auth-session";
 
 function briefSlugFromUuid(id: string): string {
   return id.replace(/-/g, "").slice(0, 8);
 }
 
 export async function POST(req: Request) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Musisz byc zalogowany jako firma." }, { status: 401 });
+  }
+  if (user.role !== "company") {
+    return NextResponse.json({ error: "To konto nie ma uprawnien firmy." }, { status: 403 });
+  }
+
   let json: unknown;
   try {
     json = await req.json();
@@ -24,7 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg || "Walidacja nie powiodła się." }, { status: 400 });
   }
 
-  const { companyName, companyEmail, rawInput, finalContent } = parsed.data;
+  const { companyName, rawInput, finalContent } = parsed.data;
 
   if (!hasSupabaseServiceConfig()) {
     return NextResponse.json({ error: SUPABASE_SERVICE_MISSING_MESSAGE }, { status: 500 });
@@ -32,7 +41,7 @@ export async function POST(req: Request) {
 
   const result = await dbPublishBrief({
     companyName,
-    companyEmail,
+    companyEmail: user.email,
     rawInput: rawInput as Record<string, unknown>,
     finalContent,
   });
@@ -44,7 +53,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const { briefId, accessToken } = result;
+  const { briefId, accessToken, companyId } = result;
+  await dbLinkUserCompany(user.id, companyId);
   const origin =
     process.env.NEXT_PUBLIC_APP_ORIGIN?.replace(/\/$/, "") ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");

@@ -22,15 +22,15 @@ export const researcherStageSchema = z.enum(["doktorant", "ktor", "doktor", "pos
 export type ResearcherStage = z.infer<typeof researcherStageSchema>;
 
 export const researchDomainSchema = z.enum([
-  "Inżynieria i technologia",
-  "Nauki przyrodnicze",
-  "Informatyka i AI",
-  "Nauki medyczne i zdrowie",
-  "Nauki ekonomiczne",
-  "Nauki społeczne",
-  "Matematyka i statystyka",
-  "Chemia i materiałoznawstwo",
-  "Inne",
+  "Engineering & Technology",
+  "Natural Sciences",
+  "Computer Science & AI",
+  "Medical Sciences & Health",
+  "Economics & Business",
+  "Social Sciences",
+  "Mathematics & Statistics",
+  "Chemistry & Materials Science",
+  "Other",
 ]);
 export type ResearchDomain = z.infer<typeof researchDomainSchema>;
 
@@ -163,38 +163,38 @@ export type ApplicationInput = z.infer<typeof applicationSchema>;
 /* ——— Briefy R&D (formularz firmy + API) ——— */
 
 export const industryOptions = [
-  "Produkcja przemysłowa",
-  "Farmaceutyka i biotech",
-  "Energetyka i OZE",
-  "IT i oprogramowanie",
-  "Chemia i materiały",
-  "Rolnictwo i żywność",
-  "Transport i logistyka",
-  "Medycyna i health tech",
-  "Fintech",
-  "Inne",
+  "Industrial Manufacturing",
+  "Pharmaceuticals & Biotech",
+  "Energy & Renewables",
+  "IT & Software",
+  "Chemistry & Materials",
+  "Agriculture & Food",
+  "Transport & Logistics",
+  "Medicine & HealthTech",
+  "FinTech",
+  "Other",
 ] as const;
 
 export const timelineOptions = [
-  "1–4 tygodnie",
-  "1–3 miesiące",
-  "3–6 miesięcy",
-  "6–12 miesięcy",
+  "1-4 weeks",
+  "1-3 months",
+  "3-6 months",
+  "6-12 months",
 ] as const;
 
 export const budgetOptions = [
-  "Do 5 000 zł",
-  "5 000–20 000 zł",
-  "20 000–50 000 zł",
-  "Powyżej 50 000 zł",
-  "Do ustalenia",
+  "Under PLN 5,000",
+  "PLN 5,000-20,000",
+  "PLN 20,000-50,000",
+  "Over PLN 50,000",
+  "Open to discuss",
 ] as const;
 
 export const generateBriefInputSchema = z.object({
-  problem: z.string().min(50, "Opis problemu musi mieć co najmniej 50 znaków."),
-  industry: z.string().min(1, "Wybierz branżę."),
-  timeline: z.string().min(1, "Wybierz horyzont czasowy."),
-  budget: z.string().min(1, "Wybierz budżet."),
+  problem: z.string().min(50, "Problem description must be at least 50 characters."),
+  industry: z.string().min(1, "Please select an industry."),
+  timeline: z.string().min(1, "Please select a timeline."),
+  budget: z.string().min(1, "Please select a budget."),
   expected_result: z.string().optional().default(""),
 });
 export type GenerateBriefInput = z.infer<typeof generateBriefInputSchema>;
@@ -228,7 +228,6 @@ export type PublishBriefBody = z.infer<typeof publishBriefBodySchema>;
 /** Treść zgłoszenia badacza (POST /api/applications/submit) */
 export const applicationSubmitSchema = z.object({
   briefId: z.string().uuid(),
-  researcherEmail: z.string().email("Podaj poprawny adres e-mail."),
   coverMessage: z.string().min(100).max(800),
   confirmed: z
     .boolean()

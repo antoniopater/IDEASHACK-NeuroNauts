@@ -10,17 +10,20 @@ import { deriveBriefTitle } from "@/lib/brief-utils";
 import { classifyResearcher } from "@/lib/researcher-classification";
 import { recommendBriefsForResearcher } from "@/lib/researcher-recommendations";
 import { aiBriefResponseSchema } from "@/lib/validations";
+import { requireUser } from "@/lib/auth-session";
 
 type PageProps = { params: Promise<{ id: string }> };
 
 const statusLabel: Record<string, string> = {
-  pending: "Oczekuje",
-  shortlisted: "Na shortliście",
-  rejected: "Odrzucona",
+  pending: "Pending",
+  shortlisted: "Shortlisted",
+  rejected: "Rejected",
 };
 
 export default async function ResearcherDashboardPage({ params }: PageProps) {
+  const user = await requireUser("researcher");
   const { id } = await params;
+  if (user.researcher_id !== id) notFound();
   const researcher = await dbGetResearcherProfile(id);
   if (!researcher) notFound();
 
@@ -43,7 +46,7 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] px-4 py-10">
       <main className="mx-auto max-w-6xl space-y-8">
         <header className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <p className="text-sm font-medium text-indigo-700">Dashboard doktoranta</p>
+          <p className="text-sm font-medium text-indigo-700">Researcher dashboard</p>
           <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">
@@ -78,35 +81,35 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Kompletność profilu
+              Profile completeness
             </p>
             <p className="mt-2 text-3xl font-semibold text-gray-900">
               {researcher.profile_completeness ?? 0}%
             </p>
             <p className="mt-2 text-sm text-gray-600">
-              Im pełniejszy profil, tym lepsze rekomendacje i wyjaśnienia dopasowania.
+              A more complete profile yields better recommendations and match explanations.
             </p>
           </article>
           <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Rekomendowane briefy
+              Recommended briefs
             </p>
             <p className="mt-2 text-3xl font-semibold text-gray-900">
               {recommendations.length}
             </p>
             <p className="mt-2 text-sm text-gray-600">
-              Ranking liczony z domeny, skillów, trybu współpracy i dostępności.
+              Ranked by domain, skills, collaboration mode and availability.
             </p>
           </article>
           <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Aplikacje
+              Applications
             </p>
             <p className="mt-2 text-3xl font-semibold text-gray-900">
               {applications.length}
             </p>
             <p className="mt-2 text-sm text-gray-600">
-              Po aplikacji zobaczysz score i status po stronie firmy.
+              After applying you will see the score and status from the company.
             </p>
           </article>
         </section>
@@ -114,13 +117,13 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
         <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Bliskie projekty</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Best matches</h2>
               <p className="text-sm text-gray-600">
-                Najlepsze briefy dla twojego profilu, z krótkim wyjaśnieniem.
+                Top briefs for your profile, with a short explanation.
               </p>
             </div>
             <Link href="/briefs" className="text-sm font-medium text-indigo-600 hover:underline">
-              Zobacz wszystkie briefy
+              View all briefs
             </Link>
           </div>
 
@@ -146,13 +149,13 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
                     <p className="mt-2 text-sm leading-relaxed text-gray-700">{rec.cel_rd}</p>
                   </div>
                   <div className="shrink-0 rounded-xl bg-white px-4 py-3 text-center">
-                    <p className="text-xs text-gray-500">Dopasowanie</p>
+                    <p className="text-xs text-gray-500">Match</p>
                     <p className="text-2xl font-semibold text-indigo-700">{rec.score}/100</p>
                   </div>
                 </div>
                 <div className="mt-4 grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
                   <div>
-                    <p className="font-medium text-emerald-800">Dlaczego pasuje</p>
+                    <p className="font-medium text-emerald-800">Why it fits</p>
                     <ul className="mt-1 list-disc space-y-1 pl-5 text-gray-700">
                       {rec.reasons.slice(0, 3).map((reason) => (
                         <li key={reason}>{reason}</li>
@@ -160,7 +163,7 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
                     </ul>
                   </div>
                   <div>
-                    <p className="font-medium text-amber-800">Do sprawdzenia</p>
+                    <p className="font-medium text-amber-800">Watch out for</p>
                     <ul className="mt-1 list-disc space-y-1 pl-5 text-gray-700">
                       {rec.gaps.slice(0, 2).map((gap) => (
                         <li key={gap}>{gap}</li>
@@ -173,27 +176,27 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
                     href={`/researcher/apply/${rec.briefId}`}
                     className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
                   >
-                    Aplikuj
+                    Apply
                   </Link>
                   <Link
                     href={`/briefs/${rec.briefId}`}
                     className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
                   >
-                    Pełny brief
+                    Full brief
                   </Link>
                 </div>
               </article>
             ))}
             {recommendations.length === 0 ? (
               <p className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-600">
-                Brak rekomendacji. Uzupełnij profil albo poczekaj na nowe briefy.
+                No recommendations. Complete your profile or wait for new briefs.
               </p>
             ) : null}
           </div>
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">Moje aplikacje</h2>
+          <h2 className="text-lg font-semibold text-gray-900">My applications</h2>
           <div className="mt-4 space-y-3">
             {applications.map((app) => {
               const brief = Array.isArray(app.briefs) ? app.briefs[0] : app.briefs;
@@ -222,7 +225,7 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
             })}
             {applications.length === 0 ? (
               <p className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-600">
-                Nie masz jeszcze aplikacji. Zacznij od jednego z rekomendowanych projektów.
+                You don't have any applications yet. Start with one of the recommended projects.
               </p>
             ) : null}
           </div>

@@ -40,7 +40,7 @@ const dimensionLabels: Record<string, string> = {
 
 function stageLabel(stage: string): string {
   if (stage === "doktorant") return "Doktorant";
-  if (stage === "ktor" || stage === "doktor") return "Kandydat na doktoranta";
+  if (stage === "ktor" || stage === "doktor") return "Doktor";
   if (stage === "postdoc") return "Postdoc";
   return stage;
 }
@@ -84,7 +84,12 @@ export default function ApplicationsManageClient({
       const res = await fetch("/api/applications/status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applicationId, briefId, token, status }),
+        body: JSON.stringify({
+          applicationId,
+          briefId,
+          ...(token ? { token } : {}),
+          status,
+        }),
       });
       if (!res.ok) {
         const j = (await res.json()) as { error?: string };

@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useFieldArray,
   useForm,
@@ -48,8 +48,55 @@ const emptyProject = {
   year_to: undefined as number | undefined,
 };
 
+const researcherTestData = {
+  first_name: "Anna",
+  last_name: "Kowalska",
+  email: "anna.kowalska.demo@neuronauts.pl",
+  institution: "Politechnika Warszawska, Wydzial Elektroniki i Technik Informacyjnych",
+  phd_start_year: Math.max(2010, currentYear - 2),
+  research_subdomain: "Predykcyjne utrzymanie ruchu i analiza danych produkcyjnych",
+  research_description:
+    "Prowadze badania nad modelami predykcji awarii i optymalizacja parametrow procesow przemyslowych. Lacze metody statystyczne, uczenie maszynowe i analize przyczynowa, aby poprawiac jakosc produktow oraz skracac czas reakcji na odchylenia procesu.",
+  practical_skills: [
+    "Analiza danych (Python/R)",
+    "Modelowanie statystyczne",
+    "Projektowanie eksperymentow",
+    "Pisanie raportow technicznych",
+  ],
+  projects: [
+    {
+      title: "Model predykcji awarii w linii montazowej SMT",
+      description:
+        "Przygotowalam pipeline danych i model klasyfikacyjny, ktory przewiduje ryzyko defektu na etapie testow koncowych.",
+      type: "research" as const,
+      year_from: currentYear - 2,
+      year_to: currentYear - 1,
+    },
+    {
+      title: "Wspolpraca z zakladem produkcyjnym nad optymalizacja zuzycia energii",
+      description:
+        "W projekcie wypracowalam zestaw KPI i rekomendacje zmian parametrow procesu, co ograniczylo zuzycie energii.",
+      type: "industry" as const,
+      year_from: currentYear - 1,
+      year_to: currentYear,
+    },
+  ],
+  availability_hours_per_week: 16,
+  availability_modes: ["consultation", "proof_of_concept", "small_rd_project"] as const,
+  motivation:
+    "Chce wspolpracowac z firmami, bo zalezy mi na praktycznym wdrazaniu wynikow badan i mierzalnym efekcie biznesowym. Potrafie tlumaczyc zlozone wyniki na konkretne decyzje projektowe, szybko iterowac hipotezy i pracowac w interdyscyplinarnych zespolach, laczac perspektywe naukowa z realiami operacyjnymi.",
+  publication_links: [
+    "https://scholar.google.com/citations?user=demoResearcher",
+    "https://orcid.org/0000-0002-1825-0097",
+  ],
+  profileSource:
+    "Doktorantka zajmujaca sie predykcja awarii i optymalizacja procesow przemyslowych. Pracuje na danych z produkcji, laczac modele ML, metody statystyczne i eksperymenty procesowe. Realizowalam projekty badawcze i wdrozeniowe z firmami, przygotowuje raporty techniczne i rekomendacje implementacyjne.",
+};
+
 export default function ResearcherRegisterPage() {
   const router = useRouter();
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [profileSource, setProfileSource] = useState("");
@@ -183,7 +230,7 @@ export default function ResearcherRegisterPage() {
   async function runProfileBuilder() {
     setProfileBuildError(null);
     if (profileSource.trim().length < 80) {
-      setProfileBuildError("Wklej co najmniej 80 znaków opisu, CV albo notatek.");
+      setProfileBuildError("Paste at least 80 characters opisu, CV albo notatek.");
       return;
     }
     setProfileBuildLoading(true);
@@ -206,12 +253,12 @@ export default function ResearcherRegisterPage() {
         error?: string;
       };
       if (!res.ok || !data.profile) {
-        setProfileBuildError(data.error || "Nie udało się zbudować profilu.");
+        setProfileBuildError(data.error || "Failed to build profile.");
         return;
       }
       applyProfileSuggestion(data.profile);
     } catch {
-      setProfileBuildError("Błąd sieci. Spróbuj ponownie.");
+      setProfileBuildError("Network error. Please try again.");
     } finally {
       setProfileBuildLoading(false);
     }
@@ -235,14 +282,14 @@ export default function ResearcherRegisterPage() {
         error?: string;
       };
       if (!res.ok) {
-        setServerError(data.error || "Nie udało się zarejestrować profilu.");
+        setServerError(data.error || "Failed to register profile.");
         return;
       }
       if (data.researcherId) {
         router.push(`/researcher/${data.researcherId}/dashboard`);
       }
     } catch {
-      setServerError("Błąd sieci. Spróbuj ponownie.");
+      setServerError("Network error. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -250,14 +297,78 @@ export default function ResearcherRegisterPage() {
 
   const motivationCount = motivation.length;
 
+  useEffect(() => {
+    async function loadMe() {
+      try {
+        const res = await fetch("/api/auth/me");
+        const data = (await res.json()) as {
+          user?: {
+            email?: string;
+            role?: "company" | "researcher";
+            institutionVerified?: boolean;
+          } | null;
+        };
+        if (!data.user) {
+          setAuthError("To complete your researcher profile, please sign in with a researcher account.");
+          return;
+        }
+        if (data.user.role !== "researcher") {
+          setAuthError("This account does not have a researcher role.");
+          return;
+        }
+        if (!data.user.institutionVerified) {
+          setAuthError("Researcher account requires institutional affiliation verification.");
+          return;
+        }
+        setValue("email", data.user.email ?? "", { shouldDirty: false });
+      } catch {
+        setAuthError("Could not verify session. Refresh and try again.");
+      } finally {
+        setAuthLoading(false);
+      }
+    }
+    void loadMe();
+  }, [setValue]);
+
+  function fillResearcherTestData() {
+    setServerError(null);
+    setProfileBuildError(null);
+    setProfileSource(researcherTestData.profileSource);
+
+    setValue("first_name", researcherTestData.first_name, { shouldDirty: true });
+    setValue("last_name", researcherTestData.last_name, { shouldDirty: true });
+    setValue("email", researcherTestData.email, { shouldDirty: true });
+    setValue("institution", researcherTestData.institution, { shouldDirty: true });
+    setValue("phd_start_year", researcherTestData.phd_start_year, { shouldDirty: true });
+    setValue("stage", stageOptions[0]?.value, { shouldDirty: true });
+    setValue("research_domain", researchDomainOptions[2] ?? researchDomainOptions[0], { shouldDirty: true });
+    setValue("research_subdomain", researcherTestData.research_subdomain, { shouldDirty: true });
+    setValue("research_description", researcherTestData.research_description, { shouldDirty: true });
+    setValue("practical_skills", [...researcherTestData.practical_skills], { shouldDirty: true });
+    setValue("projects", [...researcherTestData.projects], { shouldDirty: true });
+    setValue("availability_hours_per_week", researcherTestData.availability_hours_per_week, {
+      shouldDirty: true,
+    });
+    setValue("availability_modes", [...researcherTestData.availability_modes], { shouldDirty: true });
+    setValue("motivation", researcherTestData.motivation, { shouldDirty: true });
+    setValue("publication_links", [...researcherTestData.publication_links], { shouldDirty: true });
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] py-10 px-4">
       <div className="max-w-3xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Profil badacza</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Researcher profile</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Stwórz profil, dzięki któremu firmy znajdą cię do projektów R&D.
+            Create a profile so companies can find you for R&D projects.
           </p>
+          <button
+            type="button"
+            onClick={fillResearcherTestData}
+            className="mt-4 inline-flex items-center justify-center rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+          >
+            Fill demo data (full)
+          </button>
           <div
             className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
             role="progressbar"
@@ -267,7 +378,7 @@ export default function ResearcherRegisterPage() {
             aria-label={`Kompletność profilu: ${completenessPreview.score} na 100 procent`}
           >
             <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
-              <span>Kompletność profilu (podgląd)</span>
+              <span>Profile completeness (preview)</span>
               <span className="font-semibold text-gray-900">{completenessPreview.score}%</span>
             </div>
             <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
@@ -279,6 +390,18 @@ export default function ResearcherRegisterPage() {
           </div>
         </header>
 
+        {authLoading ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
+            <p className="text-sm text-gray-600">Checking session...</p>
+          </div>
+        ) : authError ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-6 sm:p-8 shadow-sm">
+            <p className="text-sm text-red-700">{authError}</p>
+            <Link href="/auth/sign-in" className="mt-3 inline-block text-sm font-medium text-indigo-600">
+              Go to sign in
+            </Link>
+          </div>
+        ) : (
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm"
@@ -299,7 +422,7 @@ export default function ResearcherRegisterPage() {
             />
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-gray-500">
-                {profileSource.trim().length}/80 znaków minimum
+                {profileSource.trim().length}/80 characters minimum
               </p>
               <button
                 type="button"
@@ -307,7 +430,7 @@ export default function ResearcherRegisterPage() {
                 disabled={profileBuildLoading}
                 className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
               >
-                {profileBuildLoading ? "Buduję profil..." : "Uzupełnij formularz AI"}
+                {profileBuildLoading ? "Building profile..." : "Fill form with AI"}
               </button>
             </div>
             {profileBuildError ? (
@@ -317,14 +440,14 @@ export default function ResearcherRegisterPage() {
             ) : null}
           </section>
 
-          {/* SECTION 1: Dane podstawowe */}
+          {/* SECTION 1: Basic information */}
           <h2 className={sectionHeaderClass + " !mt-0 !border-t-0 !pt-0"}>
-            Dane podstawowe
+            Basic information
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
             <div>
               <label htmlFor="first_name" className={labelClass}>
-                Imię <span className="text-red-500">*</span>
+                First name <span className="text-red-500">*</span>
               </label>
               <input
                 id="first_name"
@@ -339,7 +462,7 @@ export default function ResearcherRegisterPage() {
             </div>
             <div>
               <label htmlFor="last_name" className={labelClass}>
-                Nazwisko <span className="text-red-500">*</span>
+                Last name <span className="text-red-500">*</span>
               </label>
               <input
                 id="last_name"
@@ -362,6 +485,7 @@ export default function ResearcherRegisterPage() {
               type="email"
               autoComplete="email"
               className={inputClass}
+              readOnly
               {...register("email")}
             />
             {errors.email ? (
@@ -370,7 +494,7 @@ export default function ResearcherRegisterPage() {
           </div>
           <div className="pt-4">
             <label htmlFor="institution" className={labelClass}>
-              Uczelnia / instytut <span className="text-red-500">*</span>
+              University / institute <span className="text-red-500">*</span>
             </label>
             <input
               id="institution"
@@ -387,7 +511,7 @@ export default function ResearcherRegisterPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
             <div>
               <label htmlFor="phd_start_year" className={labelClass}>
-                Rok rozpoczęcia doktoratu{" "}
+                PhD start year{" "}
                 <span className="text-red-500">*</span>
               </label>
               <input
@@ -492,7 +616,7 @@ export default function ResearcherRegisterPage() {
           <h2 className={sectionHeaderClass}>Co możesz zrobić dla firmy?</h2>
           <div className="pt-4">
             <span className={labelClass}>
-              Umiejętności praktyczne <span className="text-red-500">*</span>
+              Practical skills <span className="text-red-500">*</span>
             </span>
             <div className="flex flex-wrap gap-2 mb-2 min-h-[2rem]">
               {skills.map((skill, idx) => (
@@ -505,7 +629,7 @@ export default function ResearcherRegisterPage() {
                     type="button"
                     onClick={() => removeSkill(idx)}
                     className="ml-1 text-indigo-500 hover:text-indigo-800"
-                    aria-label={`Usuń ${skill}`}
+                    aria-label={`Remove ${skill}`}
                   >
                     ×
                   </button>
@@ -567,8 +691,8 @@ export default function ResearcherRegisterPage() {
             ) : null}
           </div>
 
-          {/* SECTION 4: Projekty i doświadczenie */}
-          <h2 className={sectionHeaderClass}>Projekty i doświadczenie</h2>
+          {/* SECTION 4: Projects i doświadczenie */}
+          <h2 className={sectionHeaderClass}>Projects i doświadczenie</h2>
           <div className="pt-4 space-y-4">
             {projects.fields.map((field, idx) => {
               const projectErrors = errors.projects?.[idx];
@@ -587,7 +711,7 @@ export default function ResearcherRegisterPage() {
                         onClick={() => projects.remove(idx)}
                         className="text-xs text-gray-500 hover:text-red-600"
                       >
-                        Usuń
+                        Remove
                       </button>
                     ) : null}
                   </div>
@@ -632,7 +756,7 @@ export default function ResearcherRegisterPage() {
                       </select>
                     </div>
                     <div>
-                      <label className={labelClass}>Rok od</label>
+                      <label className={labelClass}>Year from</label>
                       <input
                         type="number"
                         min={1980}
@@ -645,7 +769,7 @@ export default function ResearcherRegisterPage() {
                       />
                     </div>
                     <div>
-                      <label className={labelClass}>Rok do</label>
+                      <label className={labelClass}>Year to</label>
                       <input
                         type="number"
                         min={1980}
@@ -672,7 +796,7 @@ export default function ResearcherRegisterPage() {
                 onClick={() => projects.append({ ...emptyProject })}
                 className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
               >
-                + Dodaj projekt
+                + Add project
               </button>
             ) : (
               <p className="text-xs text-gray-500">
@@ -686,8 +810,8 @@ export default function ResearcherRegisterPage() {
             ) : null}
           </div>
 
-          {/* SECTION 5: Dostępność */}
-          <h2 className={sectionHeaderClass}>Dostępność</h2>
+          {/* SECTION 5: Availability */}
+          <h2 className={sectionHeaderClass}>Availability</h2>
           <div className="pt-4">
             <label htmlFor="availability_hours" className={labelClass}>
               Ile godzin tygodniowo możesz poświęcić?{" "}
@@ -759,8 +883,8 @@ export default function ResearcherRegisterPage() {
             ) : null}
           </div>
 
-          {/* SECTION 6: Motywacja */}
-          <h2 className={sectionHeaderClass}>Motywacja</h2>
+          {/* SECTION 6: Motivation */}
+          <h2 className={sectionHeaderClass}>Motivation</h2>
           <div className="pt-4">
             <label htmlFor="motivation" className={labelClass}>
               Dlaczego chcesz współpracować z biznesem?{" "}
@@ -812,7 +936,7 @@ export default function ResearcherRegisterPage() {
                 onClick={() => publicationLinks.append("" as never)}
                 className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
               >
-                + Dodaj link
+                + Add link
               </button>
             ) : null}
           </div>
@@ -832,7 +956,7 @@ export default function ResearcherRegisterPage() {
               disabled={submitting}
               className="w-full rounded-lg bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
-              {submitting ? "Zapisuję profil…" : "Zarejestruj profil badacza"}
+              {submitting ? "Zapisuję profil…" : "Register profile badacza"}
             </button>
             <p className="text-xs text-gray-500 text-center">
               Po rejestracji możesz przeglądać briefs R&D i aplikować na
@@ -845,6 +969,7 @@ export default function ResearcherRegisterPage() {
             </p>
           </div>
         </form>
+        )}
       </div>
     </div>
   );
@@ -883,9 +1008,9 @@ function PublicationLinkRow({
           type="button"
           onClick={onRemove}
           className="text-xs text-gray-500 hover:text-red-600 px-2"
-          aria-label="Usuń link"
+          aria-label="Remove link"
         >
-          Usuń
+          Remove
         </button>
       </div>
       {error ? <p className={errorClass}>{error}</p> : null}

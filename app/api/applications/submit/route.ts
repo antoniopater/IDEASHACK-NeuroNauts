@@ -1,5 +1,5 @@
 import { aiBriefResponseSchema, applicationSubmitSchema } from "@/lib/brief-schema";
-import { dbGetBriefForSubmit, dbGetResearcherByEmailForSubmit, dbGetResearcherProjectsForSubmit, dbInsertApplication } from "@/lib/app-db";
+import { dbGetBriefForSubmit, dbGetResearcherProfile, dbGetResearcherProjectsForSubmit, dbInsertApplication } from "@/lib/app-db";
 import { completeChat, llmErrorToUserMessage } from "@/lib/llm-chat";
 import {
   MATCH_SYSTEM_PROMPT,
@@ -13,6 +13,7 @@ import {
   SUPABASE_SERVICE_MISSING_MESSAGE,
 } from "@/lib/server-env";
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth-session";
 
 function matchLlmErrorMessage(err: unknown): string {
   if (err instanceof Error && err.message.includes("Nieprawidłowy format")) {
@@ -22,6 +23,20 @@ function matchLlmErrorMessage(err: unknown): string {
 }
 
 export async function POST(req: Request) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Musisz byc zalogowany jako badacz." }, { status: 401 });
+  }
+  if (user.role !== "researcher") {
+    return NextResponse.json({ error: "To konto nie ma uprawnien badacza." }, { status: 403 });
+  }
+  if (!user.researcher_id) {
+    return NextResponse.json(
+      { error: "Najpierw uzupelnij profil badacza, aby aplikowac na briefy." },
+      { status: 403 }
+    );
+  }
+
   let json: unknown;
   try {
     json = await req.json();
@@ -35,14 +50,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg || "Walidacja nie powiodła się." }, { status: 400 });
   }
 
-  const { briefId, researcherEmail, coverMessage } = parsed.data;
-  const email = researcherEmail.trim().toLowerCase();
+  const { briefId, coverMessage } = parsed.data;
 
   if (!hasSupabaseServiceConfig()) {
     return NextResponse.json({ error: SUPABASE_SERVICE_MISSING_MESSAGE }, { status: 500 });
   }
 
-  const researcher = await dbGetResearcherByEmailForSubmit(email);
+  const researcher = await dbGetResearcherProfile(user.researcher_id);
   if (!researcher) {
     return NextResponse.json(
       { error: "Nie znaleziono profilu. Najpierw zarejestruj się jako badacz." },
@@ -62,7 +76,7 @@ export async function POST(req: Request) {
   const content = finalParsed.data;
   const raw = (brief.raw_input ?? {}) as { industry?: string; timeline?: string };
 
-  const projects = await dbGetResearcherProjectsForSubmit(researcher.id);
+  const projects = await dbGetResearcherProjectsForSubmit(user.researcher_id);
 
   const projects_summary =
     projects && projects.length > 0

@@ -8,7 +8,7 @@ import {
   timelineOptions,
 } from "@/lib/brief-schema";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Step = 1 | 2 | 3;
 
@@ -21,11 +21,37 @@ const emptyBrief: AiBriefContent = {
   suggested_researcher_profile: "",
 };
 
+const companyTestPayload = {
+  problem:
+    "Produkujemy moduły elektroniki mocy i chcemy ograniczyc zuzycie energii oraz odsetek reklamacji po testach koncowych. Obecnie nie umiemy dobrze przewidywac awarii i nie mamy modelu, ktory laczy dane z linii SMT, testow EOL oraz warunkow magazynowania.",
+  expectedResult:
+    "Dzialajacy proof-of-concept predykcji ryzyka awarii + plan wdrozenia monitoringu procesu i rekomendacje parametrow technologicznych.",
+  companyName: "NeuroNauts Manufacturing",
+  brief: {
+    cel_rd:
+      "Zaprojektowac i zweryfikowac podejscie do predykcji awarii oraz obnizenia zuzycia energii w procesie produkcji elektroniki mocy.",
+    wymagane_kompetencje: [
+      "Analiza danych procesowych i telemetrycznych (Python, SQL)",
+      "Modelowanie statystyczne i uczenie maszynowe dla predykcji jakosci",
+      "Znajomosc procesow produkcyjnych elektroniki (SMT/EOL) i DOE",
+      "Umiejetnosc przekladania wynikow badan na rekomendacje wdrozeniowe",
+    ],
+    zakres_projektu:
+      "Audyt danych historycznych, przygotowanie cech, budowa modeli predykcyjnych, walidacja na partiach produkcyjnych i przygotowanie planu integracji z obecnym raportowaniem.",
+    oczekiwany_rezultat:
+      "Raport z metrykami modelu, lista kluczowych czynnikow ryzyka, rekomendacje zmian procesu oraz backlog krokow wdrozeniowych na kolejne 8 tygodni.",
+    pierwszy_milestone:
+      "W ciagu 2 tygodni: konsolidacja danych z 3 zrodel i baseline model do predykcji awarii.",
+    suggested_researcher_profile:
+      "Doktorant lub postdoc z doswiadczeniem w data science dla produkcji, modelowaniu procesow i pracy z danymi przemyslowymi.",
+  } satisfies AiBriefContent,
+};
+
 function StepIndicator({ step }: { step: Step }) {
   const items: { n: Step; label: string }[] = [
-    { n: 1, label: "Opis problemu" },
-    { n: 2, label: "Brief R&D" },
-    { n: 3, label: "Publikacja" },
+    { n: 1, label: "Problem description" },
+    { n: 2, label: "R&D Brief" },
+    { n: 3, label: "Publish" },
   ];
   return (
     <div className="mb-10">
@@ -56,7 +82,7 @@ function StepIndicator({ step }: { step: Step }) {
         ))}
       </div>
       <p className="text-center text-sm text-gray-500 mt-4 sm:hidden">
-        Krok {step} z 3
+        Step {step} of 3
       </p>
     </div>
   );
@@ -72,6 +98,8 @@ function SectionSkeleton() {
 }
 
 export default function NewBriefPage() {
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [step, setStep] = useState<Step>(1);
   const [step1Error, setStep1Error] = useState<string | null>(null);
   const [genError, setGenError] = useState<string | null>(null);
@@ -93,6 +121,46 @@ export default function NewBriefPage() {
   const [successBriefId, setSuccessBriefId] = useState<string | null>(null);
   const [successManageUrl, setSuccessManageUrl] = useState<string | null>(null);
 
+  useEffect(() => {
+    async function loadMe() {
+      try {
+        const res = await fetch("/api/auth/me");
+        const data = (await res.json()) as {
+          user?: { email?: string; role?: "company" | "researcher" } | null;
+        };
+        if (!data.user) {
+          setAuthError("To publish briefs, please sign in with a company account.");
+          return;
+        }
+        if (data.user.role !== "company") {
+          setAuthError("This account does not have a company role. Please sign in with a company account.");
+          return;
+        }
+        setCompanyEmail(data.user.email ?? "");
+      } catch {
+        setAuthError("Could not verify session. Refresh the page and try again.");
+      } finally {
+        setAuthLoading(false);
+      }
+    }
+    void loadMe();
+  }, []);
+
+  function fillCompanyTestData() {
+    setStep1Error(null);
+    setGenError(null);
+    setPublishError(null);
+    setProblem(companyTestPayload.problem);
+    setIndustry(industryOptions[0] ?? "");
+    setTimeline(timelineOptions[1] ?? timelineOptions[0] ?? "");
+    setBudget(budgetOptions[2] ?? budgetOptions[0] ?? "");
+    setExpectedResult(companyTestPayload.expectedResult);
+    setBrief(companyTestPayload.brief);
+    setCompanyName(companyTestPayload.companyName);
+    setConfirmPublish(true);
+    setStep(3);
+  }
+
   const runGenerate = useCallback(async () => {
     setGenError(null);
     setGenerating(true);
@@ -110,13 +178,13 @@ export default function NewBriefPage() {
       });
       const data = (await res.json()) as { brief?: AiBriefContent; error?: string };
       if (!res.ok) {
-        setGenError(data.error || "Nie udało się wygenerować briefu.");
+        setGenError(data.error || "Failed to generate brief.");
         setBrief(emptyBrief);
         return;
       }
       if (data.brief) setBrief(data.brief);
     } catch {
-      setGenError("Błąd sieci. Sprawdź połączenie i spróbuj ponownie.");
+      setGenError("Network error. Check connection and try again.");
       setBrief(emptyBrief);
     } finally {
       setGenerating(false);
@@ -127,11 +195,11 @@ export default function NewBriefPage() {
     e.preventDefault();
     setStep1Error(null);
     if (problem.trim().length < 50) {
-      setStep1Error("Opis problemu musi mieć co najmniej 50 znaków.");
+      setStep1Error("Problem description must be at least 50 characters.");
       return;
     }
     if (!industry) {
-      setStep1Error("Wybierz branżę.");
+      setStep1Error("Select industry.");
       return;
     }
     if (!timeline) {
@@ -225,7 +293,7 @@ export default function NewBriefPage() {
     return (
       <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] py-12 px-4">
         <div className="max-w-lg mx-auto rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">Brief opublikowany</h1>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Brief published</h1>
           <p className="text-gray-600 text-sm mb-6">
             Twój brief jest już widoczny dla badaczy. Identyfikator:{" "}
             <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">{successBriefId}</code>
@@ -234,7 +302,7 @@ export default function NewBriefPage() {
             href={`/briefs/${successBriefId}`}
             className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
           >
-            Zobacz brief
+            View brief
           </Link>
           {successManageUrl ? (
             <Link
@@ -257,11 +325,31 @@ export default function NewBriefPage() {
           <p className="text-sm text-gray-600 mt-1">
             Opisz problem — wygenerujemy brief zrozumiały dla badaczy.
           </p>
+          <button
+            type="button"
+            onClick={fillCompanyTestData}
+            className="mt-4 inline-flex items-center justify-center rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+          >
+            Fill demo data (full)
+          </button>
         </header>
 
         <StepIndicator step={step} />
 
-        {step === 1 && (
+        {authLoading ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
+            <p className="text-sm text-gray-600">Sprawdzam sesje...</p>
+          </div>
+        ) : authError ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-6 sm:p-8 shadow-sm">
+            <p className="text-sm text-red-700">{authError}</p>
+            <Link href="/auth/sign-in" className="mt-3 inline-block text-sm font-medium text-indigo-600">
+              Przejdz do logowania
+            </Link>
+          </div>
+        ) : null}
+
+        {!authLoading && !authError && step === 1 && (
           <form onSubmit={handleStep1Next} className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
             <h2 className="text-lg font-medium text-gray-900">Opisz swój problem</h2>
             {step1Error ? (
@@ -289,7 +377,7 @@ export default function NewBriefPage() {
             </div>
             <div>
               <label htmlFor="industry" className="block text-sm font-medium text-gray-700 mb-1">
-                Branża <span className="text-red-500">*</span>
+                Industry <span className="text-red-500">*</span>
               </label>
               <select
                 id="industry"
@@ -347,7 +435,7 @@ export default function NewBriefPage() {
             </div>
             <div>
               <label htmlFor="expected" className="block text-sm font-medium text-gray-700 mb-1">
-                Oczekiwany rezultat
+                Expected result
               </label>
               <textarea
                 id="expected"
@@ -369,7 +457,7 @@ export default function NewBriefPage() {
           </form>
         )}
 
-        {step === 2 && (
+        {!authLoading && !authError && step === 2 && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h2 className="text-lg font-medium text-gray-900">Twój brief R&D</h2>
@@ -380,7 +468,7 @@ export default function NewBriefPage() {
                   disabled={generating}
                   className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Wygeneruj ponownie
+                  Regenerate
                 </button>
                 <button
                   type="button"
@@ -409,7 +497,7 @@ export default function NewBriefPage() {
               <>
                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-5 sm:p-6 space-y-6">
                   <section>
-                    <h3 className="text-sm font-bold text-gray-900 mb-2">Cel R&D</h3>
+                    <h3 className="text-sm font-bold text-gray-900 mb-2">R&D Goal</h3>
                     <textarea
                       value={brief.cel_rd}
                       onChange={(e) => setBrief((b) => ({ ...b, cel_rd: e.target.value }))}
@@ -418,7 +506,7 @@ export default function NewBriefPage() {
                     />
                   </section>
                   <section>
-                    <h3 className="text-sm font-bold text-gray-900 mb-2">Wymagane kompetencje</h3>
+                    <h3 className="text-sm font-bold text-gray-900 mb-2">Required competencies</h3>
                     <ul className="space-y-2">
                       {brief.wymagane_kompetencje.map((line, idx) => (
                         <li key={idx} className="flex gap-2 items-start">
@@ -449,7 +537,7 @@ export default function NewBriefPage() {
                     </button>
                   </section>
                   <section>
-                    <h3 className="text-sm font-bold text-gray-900 mb-2">Zakres projektu</h3>
+                    <h3 className="text-sm font-bold text-gray-900 mb-2">Project scope</h3>
                     <textarea
                       value={brief.zakres_projektu}
                       onChange={(e) => setBrief((b) => ({ ...b, zakres_projektu: e.target.value }))}
@@ -458,7 +546,7 @@ export default function NewBriefPage() {
                     />
                   </section>
                   <section>
-                    <h3 className="text-sm font-bold text-gray-900 mb-2">Oczekiwany rezultat</h3>
+                    <h3 className="text-sm font-bold text-gray-900 mb-2">Expected result</h3>
                     <textarea
                       value={brief.oczekiwany_rezultat}
                       onChange={(e) => setBrief((b) => ({ ...b, oczekiwany_rezultat: e.target.value }))}
@@ -467,7 +555,7 @@ export default function NewBriefPage() {
                     />
                   </section>
                   <section>
-                    <h3 className="text-sm font-bold text-gray-900 mb-2">Pierwszy milestone</h3>
+                    <h3 className="text-sm font-bold text-gray-900 mb-2">First milestone</h3>
                     <textarea
                       value={brief.pierwszy_milestone}
                       onChange={(e) => setBrief((b) => ({ ...b, pierwszy_milestone: e.target.value }))}
@@ -476,7 +564,7 @@ export default function NewBriefPage() {
                     />
                   </section>
                   <section>
-                    <h3 className="text-sm font-bold text-gray-900 mb-2">Profil badacza (sugestia AI)</h3>
+                    <h3 className="text-sm font-bold text-gray-900 mb-2">Researcher profile (sugestia AI)</h3>
                     <textarea
                       value={brief.suggested_researcher_profile}
                       onChange={(e) =>
@@ -502,7 +590,7 @@ export default function NewBriefPage() {
           </div>
         )}
 
-        {step === 3 && (
+        {!authLoading && !authError && step === 3 && (
           <form
             onSubmit={handlePublish}
             className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm"
@@ -524,10 +612,10 @@ export default function NewBriefPage() {
               </div>
               <div className="space-y-3 pt-2 border-t border-gray-200">
                 <p className="whitespace-pre-wrap">
-                  <strong className="text-gray-900">Cel R&D:</strong> {brief.cel_rd}
+                  <strong className="text-gray-900">R&D Goal:</strong> {brief.cel_rd}
                 </p>
                 <div>
-                  <strong className="text-gray-900 block mb-1">Wymagane kompetencje</strong>
+                  <strong className="text-gray-900 block mb-1">Required competencies</strong>
                   <ul className="list-disc list-inside space-y-1 text-gray-700">
                     {brief.wymagane_kompetencje.filter(Boolean).map((c, i) => (
                       <li key={i}>{c}</li>
@@ -538,14 +626,14 @@ export default function NewBriefPage() {
                   <strong className="text-gray-900">Zakres:</strong> {brief.zakres_projektu}
                 </p>
                 <p className="whitespace-pre-wrap">
-                  <strong className="text-gray-900">Oczekiwany rezultat:</strong> {brief.oczekiwany_rezultat}
+                  <strong className="text-gray-900">Expected result:</strong> {brief.oczekiwany_rezultat}
                 </p>
                 <p className="whitespace-pre-wrap">
-                  <strong className="text-gray-900">Pierwszy milestone:</strong> {brief.pierwszy_milestone}
+                  <strong className="text-gray-900">First milestone:</strong> {brief.pierwszy_milestone}
                 </p>
                 {brief.suggested_researcher_profile ? (
                   <p className="whitespace-pre-wrap">
-                    <strong className="text-gray-900">Profil badacza:</strong>{" "}
+                    <strong className="text-gray-900">Researcher profile:</strong>{" "}
                     {brief.suggested_researcher_profile}
                   </p>
                 ) : null}
@@ -554,7 +642,7 @@ export default function NewBriefPage() {
 
             <div>
               <label htmlFor="coName" className="block text-sm font-medium text-gray-700 mb-1">
-                Nazwa firmy <span className="text-red-500">*</span>
+                Company name <span className="text-red-500">*</span>
               </label>
               <input
                 id="coName"
@@ -573,7 +661,7 @@ export default function NewBriefPage() {
                 id="coEmail"
                 type="email"
                 value={companyEmail}
-                onChange={(e) => setCompanyEmail(e.target.value)}
+                readOnly
                 autoComplete="email"
                 className={inputClass}
               />
@@ -607,7 +695,7 @@ export default function NewBriefPage() {
                 disabled={publishing}
                 className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
               >
-                {publishing ? "Publikuję…" : "Opublikuj brief"}
+                {publishing ? "Publikuję…" : "Publish brief"}
               </button>
             </div>
           </form>

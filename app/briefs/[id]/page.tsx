@@ -27,8 +27,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const parsed = finalContent ? aiBriefResponseSchema.safeParse(finalContent) : null;
   const title = parsed?.success ? deriveBriefTitle(parsed.data.cel_rd) : "Brief R&D";
   return {
-    title: `${title} | RD Bridge`,
-    description: "Opublikowany brief R&D — zgłoś się jako badacz.",
+    title: `${title} | Nexdoc`,
+    description: "Opublikowany brief R&D - zgłoś się jako badacz.",
   };
 }
 

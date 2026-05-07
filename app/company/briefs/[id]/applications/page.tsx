@@ -4,6 +4,7 @@ import { hasSupabaseServiceConfig } from "@/lib/server-env";
 import type { Metadata } from "next";
 import type { ApplicationRow } from "@/lib/application-row";
 import ApplicationsManageClient from "./applications-manage-client";
+import { getCurrentUser } from "@/lib/auth-session";
 
 export const metadata: Metadata = {
   robots: "noindex, nofollow",
@@ -18,15 +19,6 @@ export default async function CompanyBriefApplicationsPage({
 }) {
   const { id } = await params;
   const { token } = await searchParams;
-  if (!token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
-        <p className="text-gray-700 text-center">
-          Brak tokenu dostępu. Użyj linku z wiadomości e-mail.
-        </p>
-      </div>
-    );
-  }
 
   if (!hasSupabaseServiceConfig()) {
     return (
@@ -37,8 +29,11 @@ export default async function CompanyBriefApplicationsPage({
   }
 
   const brief = await dbGetBriefForCompany(id);
+  const user = await getCurrentUser();
+  const byAccount = Boolean(user?.role === "company" && user.company_id && brief?.company_id === user.company_id);
+  const byToken = Boolean(token && brief?.company_access_token && brief.company_access_token === token);
 
-  if (!brief || !brief.company_access_token || brief.company_access_token !== token) {
+  if (!brief || (!byAccount && !byToken)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
         <p className="text-gray-700 text-center max-w-md">
@@ -70,7 +65,7 @@ export default async function CompanyBriefApplicationsPage({
           <h1 className="text-2xl font-semibold text-gray-900">Aplikacje na brief</h1>
           <p className="text-sm text-gray-600 mt-1">{briefTitle}</p>
         </header>
-        <ApplicationsManageClient briefId={id} token={token} applications={applications} />
+        <ApplicationsManageClient briefId={id} token={token ?? ""} applications={applications} />
       </div>
     </div>
   );
