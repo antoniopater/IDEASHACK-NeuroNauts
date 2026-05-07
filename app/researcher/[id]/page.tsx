@@ -9,6 +9,7 @@ import {
 import { dbGetResearcherProfile, dbListResearcherProjectsProfile } from "@/lib/app-db";
 import { classifyResearcher } from "@/lib/researcher-classification";
 import { HexRadar } from "@/components/shared/hex-radar";
+import { ScoreRing } from "@/components/shared/score-ring";
 import type {
   AvailabilityMode,
   ResearcherProjectType,
@@ -155,9 +156,9 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
               </h2>
               <p className="mt-1 text-sm text-gray-700">{classification.summary}</p>
             </div>
-            <span className="shrink-0 rounded-full bg-white px-3 py-1 text-sm font-semibold text-indigo-700">
-              {classification.score}/100
-            </span>
+            <div className="shrink-0">
+              <ScoreRing score={classification.score} size={72} strokeWidth={6} />
+            </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {classification.signals.slice(0, 4).map((signal) => (

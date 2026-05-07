@@ -93,8 +93,15 @@ const researcherTestData = {
     "Doktorantka zajmujaca sie predykcja awarii i optymalizacja procesow przemyslowych. Pracuje na danych z produkcji, laczac modele ML, metody statystyczne i eksperymenty procesowe. Realizowalam projekty badawcze i wdrozeniowe z firmami, przygotowuje raporty techniczne i rekomendacje implementacyjne.",
 };
 
+const WIZARD_STEPS = [
+  { n: 1, label: "Basic info" },
+  { n: 2, label: "Research & Skills" },
+  { n: 3, label: "Projects & Availability" },
+] as const;
+
 export default function ResearcherRegisterPage() {
   const router = useRouter();
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -369,23 +376,35 @@ export default function ResearcherRegisterPage() {
           >
             Fill demo data (full)
           </button>
-          <div
-            className="mt-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={completenessPreview.score}
-            aria-label={`Kompletność profilu: ${completenessPreview.score} na 100 procent`}
-          >
-            <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
-              <span>Profile completeness (preview)</span>
+          {/* Wizard step indicator */}
+          <div className="mt-6 flex items-center gap-0">
+            {WIZARD_STEPS.map((s, i) => (
+              <div key={s.n} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center gap-1">
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
+                    wizardStep > s.n ? "bg-indigo-600 border-indigo-600 text-white" :
+                    wizardStep === s.n ? "bg-white border-indigo-600 text-indigo-600" :
+                    "bg-white border-gray-300 text-gray-400"
+                  }`}>
+                    {wizardStep > s.n ? "✓" : s.n}
+                  </div>
+                  <span className={`text-[10px] font-medium whitespace-nowrap ${wizardStep === s.n ? "text-indigo-700" : "text-gray-400"}`}>{s.label}</span>
+                </div>
+                {i < WIZARD_STEPS.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-2 rounded ${wizardStep > s.n ? "bg-indigo-600" : "bg-gray-200"}`} />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Completeness bar */}
+          <div className="mt-4 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+            <div className="flex items-center justify-between text-xs text-gray-600 mb-1.5">
+              <span>Profile completeness</span>
               <span className="font-semibold text-gray-900">{completenessPreview.score}%</span>
             </div>
-            <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-indigo-600 transition-all duration-300"
-                style={{ width: `${completenessPreview.score}%` }}
-              />
+            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-full rounded-full bg-indigo-600 transition-all duration-500" style={{ width: `${completenessPreview.score}%` }} />
             </div>
           </div>
         </header>
@@ -407,6 +426,7 @@ export default function ResearcherRegisterPage() {
           className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm"
           noValidate
         >
+          {wizardStep === 1 && (<>
           <section className="mb-8 rounded-xl border border-indigo-100 bg-indigo-50/60 p-5">
             <h2 className="text-base font-semibold text-gray-900">AI Profile Builder</h2>
             <p className="mt-1 text-sm text-gray-600">
@@ -552,6 +572,24 @@ export default function ResearcherRegisterPage() {
             </div>
           </div>
 
+
+          {/* Wizard navigation */}
+          <div className="mt-8 flex items-center justify-between gap-3 pt-6 border-t border-gray-100">
+            {wizardStep > 1 ? (
+              <button type="button" onClick={() => setWizardStep((s) => Math.max(1, s - 1) as 1|2|3)}
+                className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                ← Back
+              </button>
+            ) : <span />}
+            {wizardStep < 3 ? (
+              <button type="button" onClick={() => setWizardStep((s) => Math.min(3, s + 1) as 1|2|3)}
+                className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
+                Next: {wizardStep === 1 ? "Research & Skills" : "Projects & Availability"} →
+              </button>
+            ) : null}
+          </div>
+          </>) /* end step 1 */}
+          {wizardStep === 2 && (<>
           {/* SECTION 2: Obszar badań */}
           <h2 className={sectionHeaderClass}>Obszar badań</h2>
           <div className="pt-4">
@@ -691,6 +729,24 @@ export default function ResearcherRegisterPage() {
             ) : null}
           </div>
 
+
+          {/* Wizard navigation */}
+          <div className="mt-8 flex items-center justify-between gap-3 pt-6 border-t border-gray-100">
+            {wizardStep > 1 ? (
+              <button type="button" onClick={() => setWizardStep((s) => Math.max(1, s - 1) as 1|2|3)}
+                className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                ← Back
+              </button>
+            ) : <span />}
+            {wizardStep < 3 ? (
+              <button type="button" onClick={() => setWizardStep((s) => Math.min(3, s + 1) as 1|2|3)}
+                className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
+                Next: Projects &amp; Availability →
+              </button>
+            ) : null}
+          </div>
+          </>) /* end step 2 */}
+          {wizardStep === 3 && (<>
           {/* SECTION 4: Projects i doświadczenie */}
           <h2 className={sectionHeaderClass}>Projects i doświadczenie</h2>
           <div className="pt-4 space-y-4">
@@ -956,18 +1012,23 @@ export default function ResearcherRegisterPage() {
               disabled={submitting}
               className="w-full rounded-lg bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
-              {submitting ? "Zapisuję profil…" : "Register profile badacza"}
+              {submitting ? "Saving profile…" : "Register profile"}
             </button>
             <p className="text-xs text-gray-500 text-center">
-              Po rejestracji możesz przeglądać briefs R&D i aplikować na
-              projekty.
+              After registration you can browse R&D briefs and apply for projects.
             </p>
             <p className="text-xs text-gray-500 text-center">
-              <Link href="/" className="text-indigo-600 hover:text-indigo-800">
-                Wróć na stronę główną
-              </Link>
+              <Link href="/" className="text-indigo-600 hover:text-indigo-800">Back to homepage</Link>
             </p>
           </div>
+          {/* Step 3 nav */}
+          <div className="mt-6 flex items-center gap-3 pt-4 border-t border-gray-100">
+            <button type="button" onClick={() => setWizardStep(2)}
+              className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              ← Back
+            </button>
+          </div>
+          </>) /* end step 3 */}
         </form>
         )}
       </div>

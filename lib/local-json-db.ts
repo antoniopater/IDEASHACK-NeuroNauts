@@ -592,3 +592,25 @@ export async function localGetAllResearchers(): Promise<LocalResearcher[]> {
     );
   });
 }
+
+export async function localGetBriefsByCompanyId(
+  companyId: string
+): Promise<LocalBrief[]> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    return store.briefs
+      .filter((b) => b.company_id === companyId)
+      .sort((a, b) => {
+        const ta = a.published_at ? Date.parse(a.published_at) : 0;
+        const tb = b.published_at ? Date.parse(b.published_at) : 0;
+        return tb - ta;
+      });
+  });
+}
+
+export async function localGetCompanyById(id: string): Promise<LocalCompany | null> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    return store.companies.find((c) => c.id === id) ?? null;
+  });
+}

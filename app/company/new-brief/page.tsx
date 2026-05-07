@@ -8,6 +8,7 @@ import {
   timelineOptions,
 } from "@/lib/brief-schema";
 import Link from "next/link";
+import { ResearcherPreviewPanel } from "@/components/shared/researcher-preview-panel";
 import { useCallback, useEffect, useState } from "react";
 
 type Step = 1 | 2 | 3;
@@ -319,11 +320,11 @@ export default function NewBriefPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] py-10 px-4">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <header className="mb-2 text-center sm:text-left">
-          <h1 className="text-2xl font-semibold text-gray-900">Nowy brief R&D</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">New R&D brief</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Opisz problem — wygenerujemy brief zrozumiały dla badaczy.
+            Describe your problem — we generate a brief researchers understand.
           </p>
           <button
             type="button"
@@ -350,8 +351,9 @@ export default function NewBriefPage() {
         ) : null}
 
         {!authLoading && !authError && step === 1 && (
-          <form onSubmit={handleStep1Next} className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
-            <h2 className="text-lg font-medium text-gray-900">Opisz swój problem</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <form onSubmit={handleStep1Next} className="lg:col-span-3 space-y-6 rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
+            <h2 className="text-lg font-medium text-gray-900">Describe your R&D problem</h2>
             {step1Error ? (
               <p className="text-sm text-red-600" role="alert">
                 {step1Error}
@@ -455,6 +457,15 @@ export default function NewBriefPage() {
               </button>
             </div>
           </form>
+          {/* Live researcher preview */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Live researcher matches</h3>
+              <p className="text-xs text-gray-500 mb-3">Updates as you type your problem description</p>
+              <ResearcherPreviewPanel problem={problem} domain={industry} />
+            </div>
+          </div>
+          </div>
         )}
 
         {!authLoading && !authError && step === 2 && (

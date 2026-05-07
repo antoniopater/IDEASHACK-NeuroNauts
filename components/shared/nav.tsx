@@ -41,12 +41,10 @@ export async function Nav() {
                 </>
               ) : null}
               {user.role === "company" ? (
-                <Link
-                  href="/company/new-brief"
-                  className="text-slate-400 hover:text-white transition-colors"
-                >
-                  Company panel
-                </Link>
+                <>
+                  <Link href="/company/dashboard" className="text-slate-400 hover:text-white transition-colors">Dashboard</Link>
+                  <Link href="/company/new-brief" className="text-slate-400 hover:text-white transition-colors hidden sm:block">New brief</Link>
+                </>
               ) : null}
               <Link
                 href="/api/auth/logout"
