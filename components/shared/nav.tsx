@@ -48,6 +48,7 @@ export async function Nav() {
               ) : null}
               <Link
                 href="/api/auth/logout"
+                prefetch={false}
                 className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-slate-300 hover:bg-white/10 transition-colors text-xs font-medium"
               >
                 Sign out

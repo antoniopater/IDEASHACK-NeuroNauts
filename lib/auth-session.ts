@@ -1,7 +1,24 @@
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import { dbGetUserById, type AppUserRow, type AppUserRole } from "@/lib/app-db";
 import { createSessionToken, getSessionCookieName, getSessionMaxAgeSeconds, verifySessionToken } from "@/lib/auth";
+
+/** Same flags as login cookie so the browser reliably removes the session jar entry. */
+function clearedSessionCookieOptions() {
+  return {
+    path: "/" as const,
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 0,
+  };
+}
+
+/** Route handlers must set cookies on the returned `NextResponse` — `cookies()` from `next/headers` may not merge into redirects. */
+export function clearSessionCookieOnResponse(res: NextResponse): void {
+  res.cookies.set(getSessionCookieName(), "", clearedSessionCookieOptions());
+}
 
 export async function setAuthSession(userId: string): Promise<void> {
   const cookieStore = await cookies();
@@ -21,11 +38,7 @@ export async function clearAuthSession(): Promise<void> {
   cookieStore.set({
     name: getSessionCookieName(),
     value: "",
-    path: "/",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 0,
+    ...clearedSessionCookieOptions(),
   });
 }
 
