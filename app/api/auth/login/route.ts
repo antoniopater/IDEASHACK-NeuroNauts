@@ -14,15 +14,15 @@ export async function POST(req: Request) {
   try {
     json = await req.json();
   } catch {
-    return NextResponse.json({ error: "Nieprawidlowe dane JSON." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON data." }, { status: 400 });
   }
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Nieprawidlowe dane logowania." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid login data." }, { status: 400 });
   }
   const user = await dbGetUserByEmail(parsed.data.email);
   if (!user || !verifyPassword(parsed.data.password, user.password_hash)) {
-    return NextResponse.json({ error: "Nieprawidlowy e-mail lub haslo." }, { status: 401 });
+    return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
   await setAuthSession(user.id);
   return NextResponse.json({ ok: true, role: user.role, researcher_id: user.researcher_id ?? null });

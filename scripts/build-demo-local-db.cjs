@@ -1,103 +1,110 @@
 /**
- * Generuje data/demo-local-db.json (ten sam zestaw co supabase/seed.sql) dla USE_LOCAL_JSON_DB.
- * Uruchom: node scripts/build-demo-local-db.cjs
+ * Generates data/demo-local-db.json (same dataset as supabase/seed.sql) for USE_LOCAL_JSON_DB.
+ * Run: node scripts/build-demo-local-db.cjs
  */
 const fs = require("fs");
 const path = require("path");
+const { createHash, scryptSync } = require("crypto");
 
 const root = path.join(__dirname, "..");
 const out = path.join(root, "data", "demo-local-db.json");
 
+function hashPassword(password, email) {
+  const salt = createHash("sha256").update(email.trim().toLowerCase()).digest().subarray(0, 16);
+  const key = scryptSync(password, salt, 64);
+  return `${salt.toString("hex")}:${key.toString("hex")}`;
+}
+
 const fc1 = {
   cel_rd:
-    "Opracowanie algorytmu automatycznego przypisywania zleceń serwisowych do techników w terenie z uwzględnieniem lokalizacji, kompetencji i obciążenia pracą.",
+    "Develop an algorithm for automatically assigning field service requests to technicians based on location, skills, and workload.",
   wymagane_kompetencje: [
-    "Optymalizacja kombinatoryczna lub programowanie z ograniczeniami",
-    "Znajomość algorytmów routingu / vehicle routing problem",
-    "Python lub Java — implementacja prototypu",
+    "Combinatorial optimization or constraint programming",
+    "Knowledge of routing algorithms / vehicle routing problem",
+    "Python or Java - prototype implementation",
   ],
   zakres_projektu:
-    "Analiza obecnego procesu, przegląd literatury dot. field service optimization, implementacja i testy algorytmu przypisującego na danych syntetycznych.",
+    "Analyze the current process, review field service optimization literature, and implement and test the assignment algorithm on synthetic data.",
   oczekiwany_rezultat:
-    "Działający prototyp algorytmu + raport z oceną jakości przypisań vs. obecna metoda ręczna.",
+    "Working algorithm prototype and report evaluating assignment quality versus the current manual method.",
   pierwszy_milestone:
-    "Po 2 tygodniach: sformalizowany model problemu + wybór podejścia algorytmicznego z uzasadnieniem.",
+    "After 2 weeks: formalized problem model and selected algorithmic approach with rationale.",
   suggested_researcher_profile:
-    "Osoba z tłem w informatyce lub matematyce stosowanej, która rozumie VRP / schedulowanie w terenie, potrafi zaimplementować i zmierzyć algorytm na realistycznych danych oraz komunikuje wyniki w formie raportu dla działu operacji.",
+    "Candidate with a computer science or applied mathematics background who understands VRP and field scheduling, can implement and evaluate algorithms on realistic data, and communicates results in an operations-focused report.",
 };
 
 const fc2 = {
   cel_rd:
-    "Systematyczny przegląd literatury (2019–2025) dotyczący biodegradowalnych hydrożeli jako systemów dostarczania leków w terapii ran przewlekłych.",
+    "Systematic literature review (2019-2025) on biodegradable hydrogels as drug delivery systems for chronic wound therapy.",
   wymagane_kompetencje: [
-    "Chemia polimerów lub inżynieria biomedyczna",
-    "Umiejętność przeglądu literatury naukowej (PubMed, Scopus)",
-    "Znajomość regulacji dot. wyrobów medycznych (mile widziana)",
+    "Polymer chemistry or biomedical engineering",
+    "Ability to conduct scientific literature reviews (PubMed, Scopus)",
+    "Knowledge of medical device regulations (preferred)",
   ],
   zakres_projektu:
-    "Przegląd min. 60 publikacji, synteza wyników, ocena dojrzałości TRL wybranych rozwiązań, rekomendacja 3-5 kierunków badawczych.",
+    "Review at least 60 publications, synthesize findings, assess TRL maturity of selected solutions, and recommend 3-5 research directions.",
   oczekiwany_rezultat:
-    "Raport 20–30 stron z tabelą porównawczą materiałów, mapą badaczy i rekomendacjami dla działu R&D.",
+    "A 20-30 page report with comparative materials table, researcher landscape, and recommendations for the R&D team.",
   pierwszy_milestone:
-    "Po tygodniu: protokół przeglądu zatwierdzony przez firmę + lista 15 kluczowych publikacji.",
+    "After 1 week: review protocol approved by the company and a list of 15 key publications.",
   suggested_researcher_profile:
-    "Badacz z doświadczeniem w chemii polimerów lub biomateriałach, rutinowo pracujący z bazami bibliograficznymi, potrafiący zestawić mechaniczne i biologiczne właściwości hydrożeli z potencjałem klinicznym i wskazać luki dla dalszego R&D.",
+    "Researcher experienced in polymer chemistry or biomaterials, comfortable with bibliographic databases, and able to connect hydrogel mechanical and biological properties with clinical potential and identify R&D gaps.",
 };
 
 const fc3 = {
   cel_rd:
-    "Zbadanie i implementacja metod augmentacji danych oraz domain adaptation w celu poprawy robustności modelu detekcji wad PV w zmiennych warunkach oświetleniowych.",
+    "Investigate and implement data augmentation and domain adaptation methods to improve robustness of PV defect detection in varying lighting conditions.",
   wymagane_kompetencje: [
-    "Computer vision i deep learning (PyTorch lub TensorFlow)",
+    "Computer vision and deep learning (PyTorch or TensorFlow)",
     "Domain adaptation / transfer learning",
-    "Doświadczenie z danymi z kamer przemysłowych (mile widziane)",
+    "Experience with industrial camera data (preferred)",
   ],
   zakres_projektu:
-    "Analiza przyczyn degradacji accuracy, eksperymenty z augmentacją i domain adaptation na dostarczonych przez firmę danych, raport i rekomendacje.",
+    "Analyze causes of accuracy degradation, run augmentation and domain adaptation experiments on company-provided data, and deliver a report with recommendations.",
   oczekiwany_rezultat:
-    "Raport z wynikami eksperymentów + najlepszy pipeline przetwarzania danych gotowy do integracji.",
+    "Report with experiment results plus the best data-processing pipeline ready for integration.",
   pierwszy_milestone:
-    "Po 3 tygodniach: diagnoza problemu + wyniki baseline experiments z 3 podejściami augmentacji.",
+    "After 3 weeks: problem diagnosis and baseline experiment results for 3 augmentation approaches.",
   suggested_researcher_profile:
-    "Inżynier computer vision z praktyką w modelach produkcyjnych i domain shift (oświetlenie, kamera przemysłowa), który zaprojektuje eksperymenty, zmierzy metryki porównawcze i przygotuje rekomendacje wdrożeniowe.",
+    "Computer vision engineer with production model and domain shift experience (lighting, industrial cameras), capable of designing experiments, measuring comparative metrics, and preparing deployment recommendations.",
 };
 
 const fc4 = {
   cel_rd:
-    "Proof-of-concept automatycznej klasyfikacji i priorytetyzacji zgłoszeń helpdesk z użyciem modeli językowych — ocena wykonalności technicznej i ekonomicznej.",
+    "Proof of concept for automated helpdesk ticket classification and prioritization using language models, including technical and economic feasibility assessment.",
   wymagane_kompetencje: [
-    "NLP i modele językowe (fine-tuning lub prompt engineering)",
-    "Ewaluacja modeli klasyfikacji tekstu",
-    "Szacowanie kosztów API / infrastruktury LLM",
+    "NLP and language models (fine-tuning or prompt engineering)",
+    "Text classification model evaluation",
+    "API and LLM infrastructure cost estimation",
   ],
   zakres_projektu:
-    "Analiza próbki zgłoszeń (dostarczy firma), implementacja 2-3 podejść LLM, porównanie z baseline (keyword matching), raport cost-benefit.",
+    "Analyze a sample of tickets (provided by the company), implement 2-3 LLM approaches, compare against a baseline (keyword matching), and deliver a cost-benefit report.",
   oczekiwany_rezultat:
-    "Działający POC + raport z rekomendacją: wdrażać / nie wdrażać, z szacunkiem ROI.",
+    "Working POC plus report with deployment recommendation (proceed / do not proceed) and ROI estimate.",
   pierwszy_milestone:
-    "Po tygodniu: przeanalizowana próbka 200 zgłoszeń + wybrany model do testów.",
+    "After 1 week: analyzed sample of 200 tickets and selected model for testing.",
   suggested_researcher_profile:
-    "Specjalista NLP potrafiący dobrać baseline, zaprojektować ewaluację (metryki, próbka) oraz oszacować koszty utrzymania API LLM i ryzyka jakościowe dla helpdesku umów SLA.",
+    "NLP specialist able to define a baseline, design evaluation (metrics, sample), and estimate LLM API operating costs and quality risks for SLA-bound helpdesk workflows.",
 };
 
 const matchDimensions = {
   vrp: {
-    domain_fit: { score: 96, rationale: "Profil i brief dotyczą optymalizacji zadań w terenie." },
-    skills_fit: { score: 92, rationale: "OR-Tools, heurystyki i Python pokrywają wymagania briefu." },
-    availability_fit: { score: 85, rationale: "20h tygodniowo wystarczy na POC w horyzoncie 1-3 miesięcy." },
-    motivation_fit: { score: 90, rationale: "Motywacja wskazuje chęć walidacji badań na realnych danych." },
+    domain_fit: { score: 96, rationale: "The profile and brief both focus on field task optimization." },
+    skills_fit: { score: 92, rationale: "OR-Tools, heuristics, and Python match the brief requirements." },
+    availability_fit: { score: 85, rationale: "20 hours per week is sufficient for a 1-3 month POC horizon." },
+    motivation_fit: { score: 90, rationale: "Motivation indicates willingness to validate research on real data." },
   },
   vision: {
-    domain_fit: { score: 100, rationale: "Doktorat i brief dotyczą przemysłowej detekcji defektów." },
-    skills_fit: { score: 98, rationale: "Computer vision, PyTorch i domain adaptation są centralne dla zadania." },
-    availability_fit: { score: 95, rationale: "32h tygodniowo pozwala na intensywny POC." },
-    motivation_fit: { score: 94, rationale: "Kandydat szuka projektów działających w produkcji." },
+    domain_fit: { score: 100, rationale: "Both the PhD work and brief are about industrial defect detection." },
+    skills_fit: { score: 98, rationale: "Computer vision, PyTorch, and domain adaptation are central to the task." },
+    availability_fit: { score: 95, rationale: "32 hours per week supports an intensive POC." },
+    motivation_fit: { score: 94, rationale: "The candidate is actively looking for production-grade projects." },
   },
   hydrogel: {
-    domain_fit: { score: 96, rationale: "Badania nad hydrożelami pokrywają temat briefu." },
-    skills_fit: { score: 93, rationale: "Przegląd literatury i biomateriały odpowiadają zakresowi." },
-    availability_fit: { score: 78, rationale: "16h tygodniowo jest dobre dla raportu, ale wymaga kontroli zakresu." },
-    motivation_fit: { score: 88, rationale: "Motywacja jest silnie związana z medtech i farmaceutyką." },
+    domain_fit: { score: 96, rationale: "Hydrogel research is directly aligned with the brief topic." },
+    skills_fit: { score: 93, rationale: "Literature review and biomaterials expertise match the scope." },
+    availability_fit: { score: 78, rationale: "16 hours per week is suitable for a report-focused project but needs scope control." },
+    motivation_fit: { score: 88, rationale: "Motivation is strongly aligned with medtech and pharmaceuticals." },
   },
 };
 
@@ -108,21 +115,21 @@ const store = {
       name: "Transition Technologies PSC",
       email: "rd@ttpsc.pl",
       updated_at: "2026-05-04T12:00:00.000Z",
-      industry: "IT i oprogramowanie",
+      industry: "IT & Software",
     },
     {
       id: "a0000000-0000-4000-a000-000000000002",
       name: "Polpharma Biologics",
       email: "innovation@polpharma.com",
       updated_at: "2026-05-04T12:00:00.000Z",
-      industry: "Farmaceutyka i biotech",
+      industry: "Pharmaceuticals & Biotech",
     },
     {
       id: "a0000000-0000-4000-a000-000000000003",
       name: "ML System",
       email: "rd@mlsystem.pl",
       updated_at: "2026-05-04T12:00:00.000Z",
-      industry: "IT i oprogramowanie",
+      industry: "IT & Software",
     },
   ],
   briefs: [
@@ -133,10 +140,10 @@ const store = {
       published_at: "2026-04-28T12:00:00.000Z",
       raw_input: {
         problem:
-          "Mamy system zarządzania zleceniami serwisowymi dla 200+ techników w terenie. Czas przypisywania zleceń do techników zajmuje dyspozytorowi 2-3h dziennie i opiera się na intuicji.",
-        industry: "IT i oprogramowanie",
-        timeline: "1–3 miesiące",
-        budget: "20 000–50 000 zł",
+          "We run a service request management system for 200+ field technicians. Assigning tickets to technicians takes the dispatcher 2-3 hours a day and is based largely on intuition.",
+        industry: "IT & Software",
+        timeline: "1-3 months",
+        budget: "PLN 20,000-50,000",
       },
       final_content: fc1,
       company_access_token: "ttpsc-seed-token-brief1-field-service-opt",
@@ -148,10 +155,10 @@ const store = {
       published_at: "2026-04-30T12:00:00.000Z",
       raw_input: {
         problem:
-          "Szukamy przeglądu aktualnej literatury dot. biodegradowalnych systemów dostarczania leków opartych na hydrożelach — interesuje nas szczególnie zastosowanie w leczeniu ran przewlekłych.",
-        industry: "Farmaceutyka i biotech",
-        timeline: "1–4 tygodnie",
-        budget: "5 000–20 000 zł",
+          "We are looking for a current literature review on biodegradable hydrogel-based drug delivery systems, with a particular focus on applications in the treatment of chronic wounds.",
+        industry: "Pharmaceuticals & Biotech",
+        timeline: "1-4 weeks",
+        budget: "PLN 5,000-20,000",
       },
       final_content: fc2,
       company_access_token: "polpharma-seed-token-brief2-hydrogel-lit",
@@ -163,10 +170,10 @@ const store = {
       published_at: "2026-04-24T12:00:00.000Z",
       raw_input: {
         problem:
-          "Nasz model detekcji wad w panelach fotowoltaicznych działa dobrze w laboratorium, ale na produkcji spada accuracy o 15-20pp przez zmienne warunki oświetleniowe.",
-        industry: "IT i oprogramowanie",
-        timeline: "3–6 miesięcy",
-        budget: "20 000–50 000 zł",
+          "Our defect detection model for photovoltaic panels works well in the lab, but accuracy drops by 15-20pp in production due to variable lighting conditions.",
+        industry: "IT & Software",
+        timeline: "3-6 months",
+        budget: "PLN 20,000-50,000",
       },
       final_content: fc3,
       company_access_token: "mlsystem-seed-token-brief3-pv-detection",
@@ -178,10 +185,10 @@ const store = {
       published_at: "2026-05-02T12:00:00.000Z",
       raw_input: {
         problem:
-          "Chcemy ocenić, czy zastosowanie LLM do automatycznej kategoryzacji i priorytetyzacji zgłoszeń helpdesk (ok. 500/dzień) jest technicznie wykonalne i opłacalne.",
-        industry: "IT i oprogramowanie",
-        timeline: "1–4 tygodnie",
-        budget: "5 000–20 000 zł",
+          "We want to assess whether using an LLM to automatically categorize and prioritize helpdesk tickets (about 500/day) is technically feasible and cost-effective.",
+        industry: "IT & Software",
+        timeline: "1-4 weeks",
+        budget: "PLN 5,000-20,000",
       },
       final_content: fc4,
       company_access_token: "ttpsc-seed-token-brief4-llm-helpdesk-poc",
@@ -193,24 +200,24 @@ const store = {
       email: "k.nowak@doktorant.pw.edu.pl",
       first_name: "Kamil",
       last_name: "Nowak",
-      institution: "Politechnika Warszawska, Wydział Elektroniki i Technik Informacyjnych",
+      institution: "Warsaw University of Technology, Faculty of Electronics and Information Technology",
       phd_start_year: 2024,
       stage: "doktorant",
-      research_domain: "Informatyka i AI",
-      research_subdomain: "uczenie maszynowe, systemy czasu rzeczywistego",
+      research_domain: "Computer Science & AI",
+      research_subdomain: "machine learning, real-time systems",
       research_description:
-        "Badam metody optymalizacji rozkładu zadań w systemach wieloagentowych. Konkretnie: jak sprawić, żeby wiele autonomicznych agentów (np. roboty, drony, serwisanci) efektywnie dzieliło się pracą bez centralnego koordynatora.",
+        "I research methods for optimizing task allocation in multi-agent systems. Specifically: how to make multiple autonomous agents (e.g. robots, drones, field technicians) share work efficiently without a central coordinator.",
       practical_skills: [
-        "Optymalizacja kombinatoryczna (Python, OR-Tools)",
-        "Algorytmy heurystyczne (SA, GA, tabu search)",
-        "Symulacje multi-agent (Mesa, NetLogo)",
-        "Analiza danych operacyjnych (pandas, numpy)",
-        "Pisanie raportów technicznych po polsku i angielsku",
+        "Combinatorial optimization (Python, OR-Tools)",
+        "Heuristic algorithms (SA, GA, tabu search)",
+        "Multi-agent simulations (Mesa, NetLogo)",
+        "Operational data analysis (pandas, numpy)",
+        "Writing technical reports in Polish and English",
       ],
       availability_hours_per_week: 20,
       availability_modes: ["consultation", "proof_of_concept", "small_rd_project"],
       motivation:
-        "Chcę zobaczyć, jak problemy, które modeluję teoretycznie, wyglądają w rzeczywistości. Pracując z firmą mogę zweryfikować, czy moje algorytmy mają sens poza symulacją. Poza tym szczerze — chcę zarabiać na badaniach, a nie czekać na grant.",
+        "I want to see how the problems I model theoretically look in reality. By working with a company I can verify whether my algorithms make sense outside of simulation. Honestly - I also want to earn money from research instead of waiting for a grant.",
       publication_links: [],
       profile_completeness: 88,
     },
@@ -219,24 +226,24 @@ const store = {
       email: "m.kowalczyk@uj.edu.pl",
       first_name: "Marta",
       last_name: "Kowalczyk",
-      institution: "Uniwersytet Jagielloński, Wydział Biochemii, Biofizyki i Biotechnologii",
+      institution: "Jagiellonian University, Faculty of Biochemistry, Biophysics and Biotechnology",
       phd_start_year: 2022,
       stage: "doktorant",
-      research_domain: "Nauki przyrodnicze",
-      research_subdomain: "biomateriały, hydrożele, inżynieria tkankowa",
+      research_domain: "Natural Sciences",
+      research_subdomain: "biomaterials, hydrogels, tissue engineering",
       research_description:
-        "Syntetyzuję i charakteryzuję hydrożele na bazie celulozy bakteryjnej jako nośniki dla komórek macierzystych. Interesuję się tym, jak właściwości mechaniczne żelu wpływają na różnicowanie komórek.",
+        "I synthesize and characterize bacterial cellulose hydrogels as carriers for stem cells. I am interested in how the mechanical properties of the gel influence cell differentiation.",
       practical_skills: [
-        "Synteza i charakteryzacja hydrożeli (reologia, SEM, FTIR)",
-        "Hodowla komórkowa i testy cytotoksyczności",
-        "Przegląd literatury naukowej (PubMed, Scopus, Web of Science)",
-        "Pisanie raportów naukowych",
-        "Znajomość regulacji dot. wyrobów medycznych klasy I",
+        "Hydrogel synthesis and characterization (rheology, SEM, FTIR)",
+        "Cell culture and cytotoxicity testing",
+        "Scientific literature review (PubMed, Scopus, Web of Science)",
+        "Writing scientific reports",
+        "Knowledge of class I medical device regulations",
       ],
       availability_hours_per_week: 16,
       availability_modes: ["literature_review", "consultation"],
       motivation:
-        "Akademia daje mi głębię, ale brakuje mi kontaktu z realnym zastosowaniem. Chcę zobaczyć, jakie pytania zadają firmy — to też inspiruje moje badania. Interesuje mnie szczególnie medtech i farmaceutyka.",
+        "Academia gives me depth, but I lack contact with real-world applications. I want to see what questions companies are asking - it also inspires my research. I am especially interested in medtech and pharmaceuticals.",
       publication_links: ["https://doi.org/10.1016/j.carbpol.2023.121456"],
       profile_completeness: 82,
     },
@@ -244,25 +251,25 @@ const store = {
       id: "c0000000-0000-4000-c000-000000000003",
       email: "p.wisniewski@pwr.edu.pl",
       first_name: "Piotr",
-      last_name: "Wiśniewski",
-      institution: "Politechnika Wrocławska, Katedra Informatyki Stosowanej",
+      last_name: "Wisniewski",
+      institution: "Wroclaw University of Science and Technology, Department of Applied Informatics",
       phd_start_year: 2019,
       stage: "doktor",
-      research_domain: "Informatyka i AI",
-      research_subdomain: "computer vision, deep learning, przemysłowe systemy wizyjne",
+      research_domain: "Computer Science & AI",
+      research_subdomain: "computer vision, deep learning, industrial vision systems",
       research_description:
-        "Obroniłem doktorat z detekcji defektów w materiałach kompozytowych metodami głębokiego uczenia. Przez 4 lata pracowałem na danych z kamer termowizyjnych i RGB z linii produkcyjnych.",
+        "I defended a PhD on deep learning methods for defect detection in composite materials. For 4 years I worked with thermal and RGB camera data from production lines.",
       practical_skills: [
         "Computer vision (PyTorch, OpenCV, YOLO, U-Net)",
-        "Transfer learning i domain adaptation",
-        "Praca z danymi z kamer przemysłowych (RGB, termowizja, X-ray)",
-        "Ocena jakości modeli ML w warunkach produkcyjnych",
-        "Integracja modeli z systemami SCADA/MES (proof-of-concept)",
+        "Transfer learning and domain adaptation",
+        "Working with industrial camera data (RGB, thermal, X-ray)",
+        "Evaluating ML model quality in production conditions",
+        "Integrating models with SCADA/MES systems (proof-of-concept)",
       ],
       availability_hours_per_week: 32,
       availability_modes: ["consultation", "proof_of_concept", "small_rd_project", "literature_review"],
       motivation:
-        "Po doktoracie chcę budować rzeczy, które działają w produkcji, nie tylko w papierach. Mam za sobą dwa projekty z firmami przy doktoracie i wiem, że ta praca ma sens. Szukam projektów, gdzie moja specjalizacja CV+przemysł ma realną wartość.",
+        "After my PhD I want to build things that work in production, not only in papers. I had two industry projects during my PhD and I know this work is meaningful. I am looking for projects where my CV+industry specialization brings real value.",
       publication_links: [
         "https://doi.org/10.1109/TII.2022.3187234",
         "https://doi.org/10.1016/j.eswa.2023.119876",
@@ -273,25 +280,25 @@ const store = {
       id: "c0000000-0000-4000-c000-000000000004",
       email: "a.zielinska@amu.edu.pl",
       first_name: "Anna",
-      last_name: "Zielińska",
-      institution: "Uniwersytet im. Adama Mickiewicza, Wydział Matematyki i Informatyki",
+      last_name: "Zielinska",
+      institution: "Adam Mickiewicz University, Faculty of Mathematics and Computer Science",
       phd_start_year: 2017,
       stage: "postdoc",
-      research_domain: "Matematyka i statystyka",
-      research_subdomain: "statystyka bayesowska, modelowanie probabilistyczne, NLP",
+      research_domain: "Mathematics & Statistics",
+      research_subdomain: "Bayesian statistics, probabilistic modeling, NLP",
       research_description:
-        "Badam metody wnioskowania bayesowskiego w modelach językowych — szczególnie jak kwantyfikować niepewność predykcji LLM. Ostatnio pracuję nad metodami calibration dla klasyfikatorów tekstu.",
+        "I research Bayesian inference methods for language models - in particular how to quantify the uncertainty of LLM predictions. Recently I have been working on calibration methods for text classifiers.",
       practical_skills: [
-        "Statystyka bayesowska i modelowanie probabilistyczne (Stan, PyMC)",
-        "NLP i klasyfikacja tekstu (HuggingFace, scikit-learn)",
-        "Ewaluacja i kalibracja modeli ML",
-        "Analiza danych (R, Python)",
-        "Pisanie dokumentacji technicznej",
+        "Bayesian statistics and probabilistic modeling (Stan, PyMC)",
+        "NLP and text classification (HuggingFace, scikit-learn)",
+        "ML model evaluation and calibration",
+        "Data analysis (R, Python)",
+        "Technical documentation writing",
       ],
       availability_hours_per_week: 12,
       availability_modes: ["consultation", "literature_review"],
       motivation:
-        "Współpraca z firmami pomaga mi zrozumieć, jakie pytania dotyczące niezawodności AI są ważne w praktyce. Jestem zainteresowana projektami, gdzie moja wiedza o niepewności modeli ma zastosowanie — fintech, medtech, systemy rekomendacyjne.",
+        "Working with companies helps me understand which questions about AI reliability are important in practice. I am interested in projects where my expertise on model uncertainty applies - fintech, medtech, recommender systems.",
       publication_links: [
         "https://doi.org/10.18653/v1/2023.acl-long.445",
         "https://doi.org/10.1609/aaai.v37i11.26556",
@@ -305,24 +312,24 @@ const store = {
       first_name: "Tomasz",
       last_name: "Grabowski",
       institution:
-        "AGH Akademia Górniczo-Hutnicza, Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej",
+        "AGH University of Science and Technology, Faculty of Electrical Engineering, Automatics, Computer Science and Biomedical Engineering",
       phd_start_year: 2018,
       stage: "doktor",
-      research_domain: "Inżynieria i technologia",
-      research_subdomain: "automatyka, systemy wbudowane, IoT przemysłowy",
+      research_domain: "Engineering & Technology",
+      research_subdomain: "automation, embedded systems, industrial IoT",
       research_description:
-        "Doktorat z diagnostyki predyktywnej maszyn przemysłowych metodami uczenia maszynowego. Podczas doktoratu przez 2 lata pracowałem w Eaton jako inżynier R&D i wiem jak wygląda wdrożenie od środka.",
+        "PhD on predictive diagnostics of industrial machinery using machine learning methods. During my PhD I spent 2 years at Eaton as an R&D engineer, so I know what production deployment looks like from the inside.",
       practical_skills: [
-        "Predictive maintenance i diagnostyka predyktywna (Python, scikit-learn, PyCaret)",
-        "Systemy wbudowane i akwizycja danych (MQTT, OPC-UA, Raspberry Pi)",
-        "Analiza szeregów czasowych (FFT, wavelet, LSTM)",
-        "Praca z danymi z PLC i SCADA",
-        "Pisanie specyfikacji technicznych i dokumentacji dla klientów przemysłowych",
+        "Predictive maintenance and diagnostics (Python, scikit-learn, PyCaret)",
+        "Embedded systems and data acquisition (MQTT, OPC-UA, Raspberry Pi)",
+        "Time series analysis (FFT, wavelet, LSTM)",
+        "Working with PLC and SCADA data",
+        "Writing technical specifications and documentation for industrial customers",
       ],
       availability_hours_per_week: 24,
       availability_modes: ["consultation", "proof_of_concept", "small_rd_project"],
       motivation:
-        'Znam ból wdrożeń przemysłowych od środka — wiem, że dobry paper to za mało. Chcę pracować z firmami, które mają realny problem do rozwiązania, nie tylko potrzebę "zrobienia R&D" dla dotacji. Projekty IoT, predictive maintenance i automatyzacja przemysłowa to moje.',
+        'I know the pain of industrial deployment from the inside - I know that a good paper is not enough. I want to work with companies that have a real problem to solve, not just a need to "do R&D" for a grant. IoT, predictive maintenance, and industrial automation projects are my thing.',
       publication_links: ["https://doi.org/10.1016/j.ress.2022.108534"],
       profile_completeness: 92,
     },
@@ -331,9 +338,9 @@ const store = {
     {
       id: "e0000000-0000-4000-e000-000000000001",
       researcher_id: "c0000000-0000-4000-c000-000000000001",
-      title: "Optymalizacja tras dla floty 50 pojazdów",
+      title: "Route optimization for a fleet of 50 vehicles",
       description:
-        "Projekt zaliczeniowy: zamodelowałem VRP dla fikcyjnej firmy kurierskiej i porównałem OR-Tools vs algorytm genetyczny własnej roboty. OR-Tools wygrał 3:0.",
+        "Course project: I modeled VRP for a fictional courier company and compared OR-Tools against a custom genetic algorithm. OR-Tools won 3:0.",
       type: "research",
       year_from: 2024,
       year_to: 2024,
@@ -341,9 +348,9 @@ const store = {
     {
       id: "e0000000-0000-4000-e000-000000000002",
       researcher_id: "c0000000-0000-4000-c000-000000000001",
-      title: "Koło Naukowe AI PW — projekt demonstracyjny",
+      title: "AI Student Circle WUT - demo project",
       description:
-        "Zbudowałem z zespołem aplikację webową pokazującą działanie algorytmów harmonogramowania na żywo dla 5 maszyn. Używana do demonstracji na dniach otwartych wydziału.",
+        "Together with a team I built a web app showing scheduling algorithms running live on 5 machines. Used for demos at faculty open days.",
       type: "other",
       year_from: 2023,
       year_to: 2024,
@@ -351,9 +358,9 @@ const store = {
     {
       id: "e0000000-0000-4000-e000-000000000003",
       researcher_id: "c0000000-0000-4000-c000-000000000002",
-      title: "Synteza hydrożeli BC/PVA dla inżynierii tkankowej",
+      title: "Synthesis of BC/PVA hydrogels for tissue engineering",
       description:
-        "Główny projekt doktorski — synteza i kompleksowa charakteryzacja 12 formulacji hydrożelu, testy z komórkami macierzystymi hMSC.",
+        "Main PhD project - synthesis and full characterization of 12 hydrogel formulations, with hMSC stem cell tests.",
       type: "research",
       year_from: 2022,
       year_to: 2024,
@@ -361,9 +368,9 @@ const store = {
     {
       id: "e0000000-0000-4000-e000-000000000004",
       researcher_id: "c0000000-0000-4000-c000-000000000002",
-      title: "Współpraca z firmą Tricomed",
+      title: "Collaboration with Tricomed",
       description:
-        "Trzymiesięczna konsultacja przy projekcie opatrunków aktywnych — przygotowałam przegląd literatury dot. hydrogel wound dressings i uczestniczyłam w dyskusjach z działem R&D.",
+        "Three-month consultation on an active wound dressing project - I prepared a literature review on hydrogel wound dressings and joined R&D discussions.",
       type: "industry",
       year_from: 2023,
       year_to: 2023,
@@ -371,9 +378,9 @@ const store = {
     {
       id: "e0000000-0000-4000-e000-000000000005",
       researcher_id: "c0000000-0000-4000-c000-000000000003",
-      title: "Detekcja delaminacji w CFRP metodami deep learning",
+      title: "Delamination detection in CFRP using deep learning",
       description:
-        "Doktorat: zbudowałem dataset 12k obrazów termowizyjnych, wytrenowałem i porównałem 6 architektur CNN. Wyniki: 94.3% F1 na zbiorze testowym.",
+        "PhD: I built a 12k thermal image dataset, trained and compared 6 CNN architectures. Result: 94.3% F1 on the test set.",
       type: "research",
       year_from: 2019,
       year_to: 2023,
@@ -381,9 +388,9 @@ const store = {
     {
       id: "e0000000-0000-4000-e000-000000000006",
       researcher_id: "c0000000-0000-4000-c000-000000000003",
-      title: "Projekt z Volkswagen Poznań — inspekcja wizualna lakieru",
+      title: "Volkswagen Poznan project - paint visual inspection",
       description:
-        "Proof-of-concept systemu detekcji zarysowań na karoserii — od zebrania danych po integrację z systemem raportowania na linii produkcyjnej.",
+        "Proof-of-concept system for detecting body paint scratches - from data collection to integration with the production line reporting system.",
       type: "industry",
       year_from: 2022,
       year_to: 2023,
@@ -391,9 +398,9 @@ const store = {
     {
       id: "e0000000-0000-4000-e000-000000000007",
       researcher_id: "c0000000-0000-4000-c000-000000000004",
-      title: "Kalibracja modeli klasyfikacji tekstu dla medycyny",
+      title: "Calibration of text classification models for medicine",
       description:
-        "Post-doc project: badałam, dlaczego modele NLP w klasyfikacji dokumentów medycznych są przekalibrowane i jak to naprawić bez dostępu do danych treningowych.",
+        "Post-doc project: I investigated why NLP models for medical document classification are miscalibrated and how to fix it without access to training data.",
       type: "research",
       year_from: 2021,
       year_to: 2023,
@@ -401,9 +408,9 @@ const store = {
     {
       id: "e0000000-0000-4000-e000-000000000008",
       researcher_id: "c0000000-0000-4000-c000-000000000004",
-      title: "Konsultacja dla startupu — ocena modelu scoringowego",
+      title: "Startup consultation - scoring model review",
       description:
-        "Fintech startup poprosił o niezależną ocenę ich modelu scoringowego. Przygotowałam raport z analizą bias, kalibracji i rekomendacjami.",
+        "A fintech startup asked for an independent review of their scoring model. I delivered a report with bias and calibration analysis plus recommendations.",
       type: "consultation",
       year_from: 2023,
       year_to: 2023,
@@ -411,9 +418,9 @@ const store = {
     {
       id: "e0000000-0000-4000-e000-000000000009",
       researcher_id: "c0000000-0000-4000-c000-000000000005",
-      title: "Predictive maintenance silników elektrycznych dla Eaton",
+      title: "Predictive maintenance of electric motors for Eaton",
       description:
-        "2 lata jako inżynier R&D — zbudowałem od zera system PdM dla 3 typów silników. Dane z 40 czujników, deployment na edge device, integracja z systemem EAM.",
+        "2 years as an R&D engineer - I built a PdM system from scratch for 3 motor types. Data from 40 sensors, edge device deployment, integration with the EAM system.",
       type: "industry",
       year_from: 2021,
       year_to: 2022,
@@ -421,9 +428,9 @@ const store = {
     {
       id: "e0000000-0000-4000-e000-000000000010",
       researcher_id: "c0000000-0000-4000-c000-000000000005",
-      title: "Diagnostyka predyktywna pomp odśrodkowych",
+      title: "Predictive diagnostics of centrifugal pumps",
       description:
-        "Doktorat: benchmark 15 metod ML do detekcji anomalii w szeregach czasowych z pomp. Największy dataset: 18 miesięcy, 8 czujników, 6 klas uszkodzeń.",
+        "PhD: benchmark of 15 ML methods for anomaly detection in pump time series. Largest dataset: 18 months, 8 sensors, 6 fault classes.",
       type: "research",
       year_from: 2022,
       year_to: 2024,
@@ -435,15 +442,15 @@ const store = {
       brief_id: "b0000000-0000-4000-b000-000000000001",
       researcher_id: "c0000000-0000-4000-c000-000000000001",
       cover_message:
-        "Dzień dobry, zajmuję się dokładnie problemem przypisywania w środowisku wieloagentowym i VRP — chętnie opracuję prototyp i porównanie z obecną metodą dyspozytora na waszych danych syntetycznych lub zanonimizowanych. Proponuję spotkanie w celu doprecyzowania ograniczeń biznesowych.",
+        "Hello, I work directly on the assignment problem in multi-agent environments and on VRP - I would happily build a prototype and compare it with the dispatcher's current method on synthetic or anonymized data. I propose a meeting to clarify business constraints.",
       match_score: 91,
       match_explanation:
-        "Kamil bezpośrednio bada problem przypisywania zadań w systemach wieloagentowych — to dokładnie Vehicle Routing Problem opisany w briefie. Jego umiejętności z OR-Tools i algorytmami heurystycznymi są dokładnie tym, czego projekt wymaga.",
+        "Kamil directly studies the task assignment problem in multi-agent systems - that is exactly the Vehicle Routing Problem described in the brief. His OR-Tools and heuristic algorithm skills are precisely what the project requires.",
       match_strengths: [
-        "Dopasowanie tematyczne do VRP i harmonogramowania w terenie",
-        "Praktyczne umiejętności implementacji w Pythonie i OR-Tools",
+        "Topic match with VRP and field scheduling",
+        "Practical implementation skills in Python and OR-Tools",
       ],
-      match_risks: ["Doktorant wcześniejszego roku — mniej projektów komercyjnych w skali 200+ techników"],
+      match_risks: ["Early-stage PhD candidate - fewer commercial projects at the 200+ technician scale"],
       match_dimensions: matchDimensions.vrp,
       status: "pending",
     },
@@ -452,11 +459,11 @@ const store = {
       brief_id: "b0000000-0000-4000-b000-000000000003",
       researcher_id: "c0000000-0000-4000-c000-000000000003",
       cover_message:
-        "W moim doktoracie zajmowałem się degradacją modeli CV przy zmianie warunków nagrzewania/oświetlenia na linii — chętnie przeniosę ten workflow na panele PV i przygotuję plan eksperymentów augmentacji oraz domain adaptation.",
+        "During my PhD I studied CV model degradation when heating/lighting conditions changed on the production line - I would gladly transfer that workflow to PV panels and prepare an experiment plan for augmentation and domain adaptation.",
       match_score: 97,
       match_explanation:
-        "Idealne dopasowanie — Piotr obronił doktorat z detekcji defektów w materiałach kompozytowych metodami CV i ma doświadczenie z domain adaptation. Problem ze zmiennym oświetleniem to jego specjalność.",
-      match_strengths: ["Silny track record CV i domain adaptation", "Doświadczenie z danymi przemysłowymi z linii"],
+        "A perfect fit - Piotr defended a PhD on defect detection in composite materials using CV and has experience with domain adaptation. The variable lighting problem is his specialty.",
+      match_strengths: ["Strong CV and domain adaptation track record", "Experience with industrial production-line data"],
       match_risks: [],
       match_dimensions: matchDimensions.vision,
       status: "shortlisted",
@@ -466,17 +473,98 @@ const store = {
       brief_id: "b0000000-0000-4000-b000-000000000002",
       researcher_id: "c0000000-0000-4000-c000-000000000002",
       cover_message:
-        "Specjalizuję się w hydrożelach i systematycznych przeglądach literatury (PubMed/Scopus). Mogę przygotować protokół przeglądu, tabelę materiałów oraz rekomendacje TRL dopasowane do waszego pipeline R&D.",
+        "I specialize in hydrogels and systematic literature reviews (PubMed/Scopus). I can prepare a review protocol, a materials comparison table, and TRL recommendations aligned with your R&D pipeline.",
       match_score: 94,
       match_explanation:
-        "Marta aktywnie pracuje z hydrożelami jako nośnikami biologicznymi i ma udokumentowane doświadczenie w przeglądach literatury farmaceutycznej. Jej profil pasuje niemal idealnie do zakresu briefu.",
+        "Marta actively works with hydrogels as biological carriers and has documented experience with pharmaceutical literature reviews. Her profile fits the brief scope almost perfectly.",
       match_strengths: [
-        "Bieżące badania nad hydrożelami",
-        "Doświadczenie w przeglądach pod kątem medtech/farma",
+        "Active research on hydrogels",
+        "Experience with reviews focused on medtech/pharma",
       ],
-      match_risks: ["Ograniczona dostępność tygodniowa względem pełnego etatu"],
+      match_risks: ["Limited weekly availability versus a full-time engagement"],
       match_dimensions: matchDimensions.hydrogel,
       status: "pending",
+    },
+  ],
+  favorite_briefs: [],
+  users: [
+    {
+      id: "u0000000-0000-4000-u000-000000000001",
+      email: "k.nowak@doktorant.pw.edu.pl",
+      password_hash: hashPassword("demo1234", "k.nowak@doktorant.pw.edu.pl"),
+      role: "researcher",
+      institution_name: "Warsaw University of Technology, Faculty of Electronics and Information Technology",
+      institution_verified: true,
+      company_id: null,
+      researcher_id: "c0000000-0000-4000-c000-000000000001",
+      created_at: "2026-05-04T12:00:00.000Z",
+    },
+    {
+      id: "u0000000-0000-4000-u000-000000000002",
+      email: "a.zielinska@amu.edu.pl",
+      password_hash: hashPassword("demo1234", "a.zielinska@amu.edu.pl"),
+      role: "researcher",
+      institution_name: "Adam Mickiewicz University, Faculty of Mathematics and Computer Science",
+      institution_verified: true,
+      company_id: null,
+      researcher_id: "c0000000-0000-4000-c000-000000000004",
+      created_at: "2026-05-04T12:00:00.000Z",
+    },
+    {
+      id: "u0000000-0000-4000-u000-000000000005",
+      email: "m.kowalczyk@uj.edu.pl",
+      password_hash: hashPassword("demo1234", "m.kowalczyk@uj.edu.pl"),
+      role: "researcher",
+      institution_name: "Jagiellonian University, Faculty of Biochemistry, Biophysics and Biotechnology",
+      institution_verified: true,
+      company_id: null,
+      researcher_id: "c0000000-0000-4000-c000-000000000002",
+      created_at: "2026-05-04T12:00:00.000Z",
+    },
+    {
+      id: "u0000000-0000-4000-u000-000000000006",
+      email: "p.wisniewski@pwr.edu.pl",
+      password_hash: hashPassword("demo1234", "p.wisniewski@pwr.edu.pl"),
+      role: "researcher",
+      institution_name: "Wroclaw University of Science and Technology, Department of Applied Informatics",
+      institution_verified: true,
+      company_id: null,
+      researcher_id: "c0000000-0000-4000-c000-000000000003",
+      created_at: "2026-05-04T12:00:00.000Z",
+    },
+    {
+      id: "u0000000-0000-4000-u000-000000000007",
+      email: "t.grabowski@agh.edu.pl",
+      password_hash: hashPassword("demo1234", "t.grabowski@agh.edu.pl"),
+      role: "researcher",
+      institution_name:
+        "AGH University of Science and Technology, Faculty of Electrical Engineering, Automatics, Computer Science and Biomedical Engineering",
+      institution_verified: true,
+      company_id: null,
+      researcher_id: "c0000000-0000-4000-c000-000000000005",
+      created_at: "2026-05-04T12:00:00.000Z",
+    },
+    {
+      id: "u0000000-0000-4000-u000-000000000003",
+      email: "rd@ttpsc.pl",
+      password_hash: hashPassword("demo1234", "rd@ttpsc.pl"),
+      role: "company",
+      institution_name: null,
+      institution_verified: true,
+      company_id: "a0000000-0000-4000-a000-000000000001",
+      researcher_id: null,
+      created_at: "2026-05-04T12:00:00.000Z",
+    },
+    {
+      id: "u0000000-0000-4000-u000-000000000004",
+      email: "innovation@polpharma.com",
+      password_hash: hashPassword("demo1234", "innovation@polpharma.com"),
+      role: "company",
+      institution_name: null,
+      institution_verified: true,
+      company_id: "a0000000-0000-4000-a000-000000000002",
+      researcher_id: null,
+      created_at: "2026-05-04T12:00:00.000Z",
     },
   ],
 };
@@ -490,9 +578,10 @@ const counts = {
   researchers: store.researchers.length,
   researcher_projects: store.researcher_projects.length,
   applications: store.applications.length,
+  users: store.users.length,
 };
 console.log("Wrote", out);
 console.log("Counts:", counts);
 if (Object.values(counts).every((n) => n > 0)) {
-  console.log("Seed complete — MVP ready for demo (local JSON).");
+  console.log("Seed complete - MVP ready for demo (local JSON).");
 }

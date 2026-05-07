@@ -23,7 +23,7 @@ export default async function CompanyBriefApplicationsPage({
   if (!hasSupabaseServiceConfig()) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
-        <p className="text-red-600">Brak konfiguracji bazy danych (Supabase lub tryb lokalny JSON).</p>
+        <p className="text-red-600">Database is not configured (Supabase or local JSON mode).</p>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export default async function CompanyBriefApplicationsPage({
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
         <p className="text-gray-700 text-center max-w-md">
-          Link jest nieprawidłowy lub nie masz dostępu do tego briefu.
+          This link is invalid or you do not have access to this brief.
         </p>
       </div>
     );
@@ -51,7 +51,7 @@ export default async function CompanyBriefApplicationsPage({
   if (rawApps === null) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
-        <p className="text-red-600">Nie udało się wczytać aplikacji.</p>
+        <p className="text-red-600">Could not load applications.</p>
       </div>
     );
   }
@@ -62,7 +62,7 @@ export default async function CompanyBriefApplicationsPage({
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] py-10 px-4">
       <div className="max-w-4xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Aplikacje na brief</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Brief applications</h1>
           <p className="text-sm text-gray-600 mt-1">{briefTitle}</p>
         </header>
         <ApplicationsManageClient briefId={id} token={token ?? ""} applications={applications} />

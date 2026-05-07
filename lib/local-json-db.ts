@@ -65,6 +65,13 @@ export type LocalApplication = {
   status: string;
 };
 
+export type LocalFavoriteBrief = {
+  id: string;
+  user_id: string;
+  brief_id: string;
+  created_at: string;
+};
+
 export type LocalUserRole = "company" | "researcher";
 
 export type LocalUser = {
@@ -85,6 +92,7 @@ type Store = {
   researchers: LocalResearcher[];
   researcher_projects: LocalResearcherProject[];
   applications: LocalApplication[];
+  favorite_briefs: LocalFavoriteBrief[];
   users: LocalUser[];
 };
 
@@ -95,6 +103,7 @@ function emptyStore(): Store {
     researchers: [],
     researcher_projects: [],
     applications: [],
+    favorite_briefs: [],
     users: [],
   };
 }
@@ -110,6 +119,9 @@ function normalizeStore(raw: unknown): Store {
       ? (o.researcher_projects as LocalResearcherProject[])
       : [],
     applications: Array.isArray(o.applications) ? (o.applications as LocalApplication[]) : [],
+    favorite_briefs: Array.isArray(o.favorite_briefs)
+      ? (o.favorite_briefs as LocalFavoriteBrief[])
+      : [],
     users: Array.isArray(o.users) ? (o.users as LocalUser[]) : [],
   };
 }
@@ -151,7 +163,7 @@ export async function localPing(): Promise<boolean> {
   });
 }
 
-/** Lista briefów opublikowanych (jak select dla /briefs). */
+/** List of published briefs (equivalent to select for /briefs). */
 export async function localListPublishedBriefs(): Promise<
   Pick<LocalBrief, "id" | "published_at" | "raw_input" | "final_content">[]
 > {
@@ -312,6 +324,64 @@ export async function localGetUserById(id: string): Promise<LocalUser | null> {
   return enqueue(async () => {
     const store = await loadStore();
     return store.users.find((u) => u.id === id) ?? null;
+  });
+}
+
+export async function localListFavoriteBriefIdsForUser(userId: string): Promise<string[]> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    return store.favorite_briefs.filter((f) => f.user_id === userId).map((f) => f.brief_id);
+  });
+}
+
+export async function localListFavoriteBriefsForUser(userId: string): Promise<
+  Pick<LocalBrief, "id" | "published_at" | "raw_input" | "final_content">[]
+> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    const order = new Map<string, number>();
+    store.favorite_briefs
+      .filter((f) => f.user_id === userId)
+      .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+      .forEach((f, idx) => {
+        order.set(f.brief_id, idx);
+      });
+
+    return store.briefs
+      .filter((b) => b.status === "published" && order.has(b.id))
+      .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+      .map((b) => ({
+        id: b.id,
+        published_at: b.published_at,
+        raw_input: b.raw_input,
+        final_content: b.final_content,
+      }));
+  });
+}
+
+export async function localSetFavoriteBrief(
+  userId: string,
+  briefId: string,
+  favorite: boolean
+): Promise<void> {
+  return enqueue(async () => {
+    const store = await loadStore();
+    const existing = store.favorite_briefs.find((f) => f.user_id === userId && f.brief_id === briefId);
+    if (favorite) {
+      if (!existing) {
+        store.favorite_briefs.push({
+          id: randomUUID(),
+          user_id: userId,
+          brief_id: briefId,
+          created_at: new Date().toISOString(),
+        });
+      }
+    } else if (existing) {
+      store.favorite_briefs = store.favorite_briefs.filter(
+        (f) => !(f.user_id === userId && f.brief_id === briefId)
+      );
+    }
+    await saveStore(store);
   });
 }
 

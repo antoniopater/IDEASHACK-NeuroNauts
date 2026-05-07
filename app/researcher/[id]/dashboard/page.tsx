@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   dbGetResearcherProfile,
+  dbListFavoriteBriefsForUser,
   dbListApplicationsForResearcher,
   dbListPublishedBriefs,
   dbListResearcherProjectsProfile,
@@ -11,6 +12,7 @@ import { classifyResearcher } from "@/lib/researcher-classification";
 import { recommendBriefsForResearcher } from "@/lib/researcher-recommendations";
 import { aiBriefResponseSchema } from "@/lib/validations";
 import { requireUser } from "@/lib/auth-session";
+import FavoriteBriefsSection, { type FavoriteBriefItem } from "./favorite-briefs-section";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -32,6 +34,7 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
     dbListPublishedBriefs(),
     dbListApplicationsForResearcher(researcher.id),
   ]);
+  const favoriteBriefRows = await dbListFavoriteBriefsForUser(user.id);
 
   const classification = classifyResearcher({
     stage: researcher.stage,
@@ -41,6 +44,20 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
     projects,
   });
   const recommendations = recommendBriefsForResearcher(researcher, briefs, 5);
+  const favoriteBriefs: FavoriteBriefItem[] = favoriteBriefRows
+    .map((row) => {
+      const parsed = aiBriefResponseSchema.safeParse(row.final_content);
+      if (!parsed.success) return null;
+      const raw = (row.raw_input ?? {}) as { industry?: string; timeline?: string };
+      return {
+        id: row.id as string,
+        title: deriveBriefTitle(parsed.data.cel_rd),
+        cel_rd: parsed.data.cel_rd,
+        industry: raw.industry ?? null,
+        timeline: raw.timeline ?? null,
+      } satisfies FavoriteBriefItem;
+    })
+    .filter((row): row is FavoriteBriefItem => Boolean(row));
 
   return (
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] px-4 py-10">
@@ -195,6 +212,8 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
           </div>
         </section>
 
+        <FavoriteBriefsSection items={favoriteBriefs} />
+
         <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900">My applications</h2>
           <div className="mt-4 space-y-3">
@@ -225,7 +244,7 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
             })}
             {applications.length === 0 ? (
               <p className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-600">
-                You don't have any applications yet. Start with one of the recommended projects.
+                You don&apos;t have any applications yet. Start with one of the recommended projects.
               </p>
             ) : null}
           </div>

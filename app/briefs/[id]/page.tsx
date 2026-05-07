@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = parsed?.success ? deriveBriefTitle(parsed.data.cel_rd) : "Brief R&D";
   return {
     title: `${title} | Nexdoc`,
-    description: "Opublikowany brief R&D - zgłoś się jako badacz.",
+    description: "Published R&D brief — apply as a researcher.",
   };
 }
 
@@ -54,11 +54,11 @@ export default async function PublicBriefPage({ params }: PageProps) {
   const title = deriveBriefTitle(brief.cel_rd);
   const companyEmbed = row.companies;
   const companyRecord = Array.isArray(companyEmbed) ? companyEmbed[0] : companyEmbed;
-  const companyName = companyRecord?.name ?? "Firma";
+  const companyName = companyRecord?.name ?? "Company";
 
   const published =
     row.published_at != null
-      ? new Date(row.published_at).toLocaleDateString("pl-PL", {
+      ? new Date(row.published_at).toLocaleDateString("en-US", {
           day: "numeric",
           month: "long",
           year: "numeric",
@@ -82,17 +82,17 @@ export default async function PublicBriefPage({ params }: PageProps) {
               {budget}
             </span>
           </div>
-          <p className="text-xs text-gray-500 mt-6">Opublikowano {published}</p>
+          <p className="text-xs text-gray-500 mt-6">Published {published}</p>
         </header>
 
         <div className="space-y-8 text-gray-800 text-sm sm:text-base leading-relaxed">
           <section>
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">Cel R&D</h2>
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">R&D goal</h2>
             <p className="whitespace-pre-wrap">{brief.cel_rd}</p>
           </section>
           <section>
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">
-              Wymagane kompetencje
+              Required competencies
             </h2>
             <ul className="list-disc list-inside space-y-1">
               {brief.wymagane_kompetencje.filter(Boolean).map((item, i) => (
@@ -101,12 +101,12 @@ export default async function PublicBriefPage({ params }: PageProps) {
             </ul>
           </section>
           <section>
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">Zakres projektu</h2>
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">Project scope</h2>
             <p className="whitespace-pre-wrap">{brief.zakres_projektu}</p>
           </section>
           <section>
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">
-              Oczekiwany rezultat
+              Expected outcome
             </h2>
             <p className="whitespace-pre-wrap">{brief.oczekiwany_rezultat}</p>
           </section>
@@ -118,7 +118,7 @@ export default async function PublicBriefPage({ params }: PageProps) {
           </section>
           <section className="rounded-xl border border-gray-200 bg-gray-50 p-5">
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">
-              Profil badacza
+              Researcher profile
             </h2>
             <p className="whitespace-pre-wrap text-gray-700">{brief.suggested_researcher_profile}</p>
           </section>
@@ -129,7 +129,7 @@ export default async function PublicBriefPage({ params }: PageProps) {
             href={`/researcher/apply/${row.id}`}
             className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
           >
-            Złóż aplikację
+            Apply
           </Link>
         </div>
       </article>

@@ -33,7 +33,7 @@ export async function GET() {
     try {
       await completeChat({
         purpose: "ping",
-        system: "Odpowiedz dokładnie jednym słowem: OK.",
+        system: "Respond with exactly one word: OK.",
         user: "ping",
         maxTokens: 16,
       });

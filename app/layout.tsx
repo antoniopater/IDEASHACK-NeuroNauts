@@ -15,8 +15,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Nexdoc — R&D dla nauki i biznesu",
-  description: "Nexdoc łączy firmy szukające wsparcia R&D z doktorantami i młodymi badaczami. AI dopasowuje profile, briefy tworzy się w minuty.",
+  title: "Nexdoc — R&D for academia and industry",
+  description:
+    "Nexdoc connects companies seeking R&D support with PhD researchers and early-career scientists. AI matches profiles; briefs are drafted in minutes.",
 };
 
 export default function RootLayout({
@@ -25,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pl">
+    <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Nav />
         {children}

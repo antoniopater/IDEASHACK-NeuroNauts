@@ -29,11 +29,11 @@ export type BriefRecommendation = {
 };
 
 const domainIndustryHints: Record<string, string[]> = {
-  "Informatyka i AI": ["IT", "oprogramowanie", "Fintech", "Transport"],
-  "Chemia i materiałoznawstwo": ["Chemia", "materiały", "Farmaceutyka"],
-  "Nauki przyrodnicze": ["Farmaceutyka", "biotech", "Rolnictwo", "żywność"],
-  "Nauki medyczne i zdrowie": ["Medycyna", "health", "Farmaceutyka"],
-  "Inżynieria i technologia": ["Produkcja", "Energetyka", "Transport", "IT"],
+  "Computer Science & AI": ["IT", "software", "Fintech", "Transport"],
+  "Chemistry & Materials Science": ["Chemistry", "materials", "Pharmaceuticals"],
+  "Natural Sciences": ["Pharmaceuticals", "biotech", "Agriculture", "food"],
+  "Medical Sciences & Health": ["Medicine", "health", "Pharmaceuticals"],
+  "Engineering & Technology": ["Manufacturing", "Energy", "Transport", "IT"],
 };
 
 export function recommendBriefsForResearcher(
@@ -76,46 +76,46 @@ function scoreBrief(
 
   if (domain && industryMatchesDomain(domain, industry)) {
     score += 20;
-    reasons.push(`dziedzina profilu pasuje do branży: ${industry}`);
+    reasons.push(`Profile domain matches industry: ${industry}`);
   }
 
   if (subdomain && tokenOverlap(subdomain, haystack)) {
     score += 15;
-    reasons.push("subdyscyplina pojawia się w opisie briefu");
+    reasons.push("Subdiscipline appears in the brief description");
   }
 
   if (matchedSkills.length > 0) {
     score += Math.min(30, matchedSkills.length * 10);
-    reasons.push(`pasujące umiejętności: ${matchedSkills.slice(0, 3).join(", ")}`);
+    reasons.push(`Matching skills: ${matchedSkills.slice(0, 3).join(", ")}`);
   } else {
-    gaps.push("brak oczywistego overlapu z zapisanymi umiejętnościami");
+    gaps.push("No clear overlap with listed skills");
   }
 
   const hours = researcher.availability_hours_per_week ?? 0;
   if (hours >= 12) {
     score += 10;
-    reasons.push("dostępność pozwala na mały projekt R&D lub POC");
+    reasons.push("Availability supports a small R&D project or POC");
   } else if (hours > 0) {
     score += 5;
-    reasons.push("dostępność wystarczy na konsultację lub przegląd");
+    reasons.push("Availability is sufficient for consultation or review");
   } else {
-    gaps.push("brak uzupełnionej dostępności");
+    gaps.push("Availability details are missing");
   }
 
-  if ((researcher.availability_modes ?? []).includes("literature_review") && /literatur|raport/i.test(haystack)) {
+  if ((researcher.availability_modes ?? []).includes("literature_review") && /literature|report/i.test(haystack)) {
     score += 10;
-    reasons.push("brief wygląda na dobry dla przeglądu literatury/ekspertyzy");
+    reasons.push("Brief appears suitable for literature review/expert analysis");
   }
   if ((researcher.availability_modes ?? []).includes("proof_of_concept") && /poc|proof|prototyp|implement/i.test(haystack)) {
     score += 10;
-    reasons.push("brief sugeruje proof-of-concept lub prototyp");
+    reasons.push("Brief suggests a proof-of-concept or prototype");
   }
 
   if (reasons.length === 0) {
-    reasons.push("projekt może być wart sprawdzenia po uzupełnieniu profilu");
+    reasons.push("Project may be worth reviewing after completing the profile");
   }
   if (gaps.length === 0) {
-    gaps.push("do potwierdzenia szczegóły zakresu i terminu z firmą");
+    gaps.push("Scope and timeline details should be confirmed with the company");
   }
 
   return {
@@ -139,7 +139,7 @@ function industryMatchesDomain(domain: string, industry: string): boolean {
 function tokenOverlap(needle: string, haystack: string): boolean {
   const tokens = needle
     .toLowerCase()
-    .split(/[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ0-9]+/)
+    .split(/[^a-zA-Z0-9]+/)
     .filter((token) => token.length >= 4);
   return tokens.some((token) => haystack.includes(token));
 }

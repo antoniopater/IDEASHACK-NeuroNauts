@@ -23,7 +23,7 @@ export type AppUserRow = {
   researcher_id: string | null;
 };
 
-/** Wiersze jak z Supabase dla /briefs i strony głównej. */
+/** Rows aligned with Supabase for /briefs and home page. */
 export type BriefListRow = {
   id: string;
   published_at: string | null;
@@ -219,6 +219,68 @@ export async function dbGetUserById(userId: string): Promise<AppUserRow | null> 
   return data as AppUserRow;
 }
 
+export async function dbListFavoriteBriefIdsForUser(userId: string): Promise<string[]> {
+  if (isLocalJsonDb()) {
+    return local.localListFavoriteBriefIdsForUser(userId);
+  }
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("favorite_briefs")
+    .select("brief_id")
+    .eq("user_id", userId);
+  if (error) return [];
+  return (data ?? []).map((row) => row.brief_id as string);
+}
+
+export async function dbListFavoriteBriefsForUser(userId: string): Promise<BriefListRow[]> {
+  if (isLocalJsonDb()) {
+    return local.localListFavoriteBriefsForUser(userId);
+  }
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("favorite_briefs")
+    .select("created_at, briefs!inner(id, published_at, raw_input, final_content, status)")
+    .eq("user_id", userId)
+    .eq("briefs.status", "published")
+    .order("created_at", { ascending: false });
+  if (error) return [];
+  return (data ?? [])
+    .map((row) => {
+      const brief = Array.isArray(row.briefs) ? row.briefs[0] : row.briefs;
+      if (!brief) return null;
+      return {
+        id: brief.id as string,
+        published_at: (brief.published_at as string | null) ?? null,
+        raw_input: brief.raw_input,
+        final_content: brief.final_content,
+      } as BriefListRow;
+    })
+    .filter((row): row is BriefListRow => Boolean(row));
+}
+
+export async function dbSetFavoriteBrief(
+  userId: string,
+  briefId: string,
+  favorite: boolean
+): Promise<void> {
+  if (isLocalJsonDb()) {
+    await local.localSetFavoriteBrief(userId, briefId, favorite);
+    return;
+  }
+  const supabase = createSupabaseServiceRoleClient();
+  if (favorite) {
+    await supabase.from("favorite_briefs").upsert(
+      {
+        user_id: userId,
+        brief_id: briefId,
+      },
+      { onConflict: "user_id,brief_id" }
+    );
+    return;
+  }
+  await supabase.from("favorite_briefs").delete().eq("user_id", userId).eq("brief_id", briefId);
+}
+
 export async function dbLinkUserResearcher(userId: string, researcherId: string): Promise<void> {
   if (isLocalJsonDb()) {
     await local.localLinkUserResearcher(userId, researcherId);
@@ -400,7 +462,7 @@ export async function dbRegisterResearcher(
     const res = await local.localRegisterResearcher({ researcher, projects });
     if (res.ok) return { researcherId: res.researcherId };
     if (!res.ok && "code" in res && res.code === "23505") return { error: { code: "23505" } };
-    return { error: { message: !res.ok && "message" in res ? res.message : "Błąd zapisu" } };
+    return { error: { message: !res.ok && "message" in res ? res.message : "Save error" } };
   }
   const supabase = createSupabaseServiceRoleClient();
   const { data: researcher, error: researcherError } = await supabase

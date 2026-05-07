@@ -17,8 +17,8 @@ export async function generateMetadata({
   const { briefId } = await params;
   const data = await dbGetPublicBrief(briefId);
   const parsed = data?.final_content ? aiBriefResponseSchema.safeParse(data.final_content) : null;
-  const title = parsed?.success ? deriveBriefTitle(parsed.data.cel_rd) : "Aplikacja";
-  return { title: `Aplikuj: ${title} | Nexdoc` };
+  const title = parsed?.success ? deriveBriefTitle(parsed.data.cel_rd) : "Application";
+  return { title: `Apply: ${title} | Nexdoc` };
 }
 
 export default async function ApplyPage({ params }: { params: Promise<{ briefId: string }> }) {
@@ -38,7 +38,7 @@ export default async function ApplyPage({ params }: { params: Promise<{ briefId:
   const budget = raw.budget ?? "—";
   const title = deriveBriefTitle(brief.cel_rd);
   const co = data.companies as { name: string } | { name: string }[] | null | undefined;
-  const companyName = (Array.isArray(co) ? co[0] : co)?.name ?? "Firma";
+  const companyName = (Array.isArray(co) ? co[0] : co)?.name ?? "Company";
 
   return (
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] py-8 px-4">
@@ -47,7 +47,7 @@ export default async function ApplyPage({ params }: { params: Promise<{ briefId:
           href={`/briefs/${briefId}`}
           className="text-sm text-indigo-600 hover:text-indigo-800 mb-6 inline-block"
         >
-          ← Pełny brief
+          ← Full brief
         </Link>
 
         <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
@@ -72,12 +72,12 @@ export default async function ApplyPage({ params }: { params: Promise<{ briefId:
 
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-6 text-sm text-gray-800">
               <section>
-                <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-2">Cel R&D</h2>
+                <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-2">R&D goal</h2>
                 <p className="whitespace-pre-wrap leading-relaxed">{brief.cel_rd}</p>
               </section>
               <section>
                 <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-2">
-                  Wymagane kompetencje
+                  Required competencies
                 </h2>
                 <ul className="list-disc list-inside space-y-1">
                   {brief.wymagane_kompetencje.filter(Boolean).map((x, i) => (
@@ -87,13 +87,13 @@ export default async function ApplyPage({ params }: { params: Promise<{ briefId:
               </section>
               <section>
                 <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-2">
-                  Zakres projektu
+                  Project scope
                 </h2>
                 <p className="whitespace-pre-wrap leading-relaxed">{brief.zakres_projektu}</p>
               </section>
               <section>
                 <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-2">
-                  Oczekiwany rezultat
+                  Expected outcome
                 </h2>
                 <p className="whitespace-pre-wrap leading-relaxed">{brief.oczekiwany_rezultat}</p>
               </section>
@@ -105,7 +105,7 @@ export default async function ApplyPage({ params }: { params: Promise<{ briefId:
               </section>
               <section className="rounded-lg bg-gray-50 border border-gray-200 p-4">
                 <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-2">
-                  Profil badacza (sugestia)
+                  Researcher profile (suggested)
                 </h2>
                 <p className="whitespace-pre-wrap text-gray-700 leading-relaxed">
                   {brief.suggested_researcher_profile}

@@ -24,13 +24,13 @@ export async function POST(req: Request) {
   try {
     json = await req.json();
   } catch {
-    return NextResponse.json({ error: "Nieprawidłowe ciało żądania JSON." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
   }
 
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
     const msg = parsed.error.issues.map((i) => i.message).join(" ");
-    return NextResponse.json({ error: msg || "Walidacja nie powiodła się." }, { status: 400 });
+    return NextResponse.json({ error: msg || "Validation failed." }, { status: 400 });
   }
 
   const { applicationId, briefId, token, status } = parsed.data;
@@ -52,18 +52,18 @@ export async function POST(req: Request) {
   }
 
   if (!authorized) {
-    return NextResponse.json({ error: "Brak uprawnień lub nieprawidłowy link." }, { status: 403 });
+    return NextResponse.json({ error: "Access denied or invalid link." }, { status: 403 });
   }
 
   const appRow = await dbFindApplication(applicationId, briefId);
   if (!appRow) {
-    return NextResponse.json({ error: "Nie znaleziono aplikacji." }, { status: 404 });
+    return NextResponse.json({ error: "Application not found." }, { status: 404 });
   }
 
   try {
     await dbUpdateApplicationStatus(applicationId, status);
   } catch {
-    return NextResponse.json({ error: "Nie udało się zaktualizować statusu." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update status." }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

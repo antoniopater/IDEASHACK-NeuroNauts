@@ -3,29 +3,29 @@ import { matchResponseSchema, type MatchResponse } from "@/lib/validations";
 
 export type { MatchResponse };
 
-/** Model do dopasowania: patrz getMatchModel() w lib/llm-chat.ts (Groq / Anthropic / OpenAI-compatible). */
+/** Matching model: see getMatchModel() in lib/llm-chat.ts (Groq / Anthropic / OpenAI-compatible). */
 
-export const MATCH_SYSTEM_PROMPT = `Oceniasz dopasowanie między projektem R&D a profilem badacza. Zwróć TYLKO JSON:
+export const MATCH_SYSTEM_PROMPT = `Assess the fit between an R&D project and a researcher profile. Return ONLY JSON:
 {
-  "score": <liczba 0-100>,
-  "explanation": "<2-3 zdania po polsku: dlaczego ta osoba pasuje lub nie pasuje>",
-  "strengths": ["<mocna strona 1>", "<mocna strona 2>"],
-  "risks": ["<potencjalne ryzyko lub luka>"],
+  "score": <number 0-100>,
+  "explanation": "<2-3 sentences in English: why this person is or is not a good fit>",
+  "strengths": ["<strength 1>", "<strength 2>"],
+  "risks": ["<potential risk or gap>"],
   "dimensions": {
-    "domain_fit": { "score": <0-100>, "rationale": "<krótki powód>" },
-    "skills_fit": { "score": <0-100>, "rationale": "<krótki powód>" },
-    "availability_fit": { "score": <0-100>, "rationale": "<krótki powód>" },
-    "motivation_fit": { "score": <0-100>, "rationale": "<krótki powód>" }
+    "domain_fit": { "score": <0-100>, "rationale": "<short reason>" },
+    "skills_fit": { "score": <0-100>, "rationale": "<short reason>" },
+    "availability_fit": { "score": <0-100>, "rationale": "<short reason>" },
+    "motivation_fit": { "score": <0-100>, "rationale": "<short reason>" }
   }
 }
 
-Zasady oceny:
-- 80-100: Bardzo dobre dopasowanie kompetencji i dostępności
-- 60-79: Dobre dopasowanie z drobnymi lukami
-- 40-59: Częściowe dopasowanie, wymaga rozmowy
-- 0-39: Słabe dopasowanie
+Scoring rules:
+- 80-100: Very strong fit of skills and availability
+- 60-79: Good fit with minor gaps
+- 40-59: Partial fit, requires discussion
+- 0-39: Weak fit
 
-Ważne: doktoranci bez publikacji mogą mieć score 80+, jeśli ich umiejętności praktyczne pasują do projektu. Nie dyskryminuj wczesnego etapu kariery.`;
+Important: PhD candidates without publications may still score 80+ if their practical skills fit the project. Do not discriminate against early-career researchers.`;
 
 export function buildMatchUserPrompt(input: {
   industry: string;
@@ -43,28 +43,28 @@ export function buildMatchUserPrompt(input: {
   availability_modes: string;
   motivation: string;
 }) {
-  return `PROJEKT R&D:
-Branża: ${input.industry}
-Cel: ${input.cel_rd}
-Wymagane kompetencje: ${input.wymagane_kompetencje}
-Zakres: ${input.zakres_projektu}
-Horyzont: ${input.timeline}
+  return `R&D PROJECT:
+Industry: ${input.industry}
+Objective: ${input.cel_rd}
+Required skills: ${input.wymagane_kompetencje}
+Scope: ${input.zakres_projektu}
+Timeline: ${input.timeline}
 
-PROFIL BADACZA:
-Etap: ${input.stage}
-Dziedzina: ${input.research_domain} / ${input.research_subdomain}
-Opis: ${input.research_description}
-Umiejętności praktyczne: ${input.practical_skills}
-Projekty: ${input.projects_summary}
-Dostępność: ${input.availability_hours}h/tydzień, tryby: ${input.availability_modes}
-Motywacja: ${input.motivation}`;
+RESEARCHER PROFILE:
+Stage: ${input.stage}
+Domain: ${input.research_domain} / ${input.research_subdomain}
+Description: ${input.research_description}
+Practical skills: ${input.practical_skills}
+Projects: ${input.projects_summary}
+Availability: ${input.availability_hours}h/week, modes: ${input.availability_modes}
+Motivation: ${input.motivation}`;
 }
 
 export function parseMatchResponse(rawText: string): MatchResponse {
   const obj = parseJsonObjectFromText(rawText);
   const parsed = matchResponseSchema.safeParse(obj);
   if (!parsed.success) {
-    throw new Error("Nieprawidłowy format odpowiedzi dopasowania.");
+    throw new Error("Invalid matching response format.");
   }
   return parsed.data;
 }

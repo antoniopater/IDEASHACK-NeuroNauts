@@ -1,125 +1,125 @@
 ## RD Bridge — Setup
 
-MVP web app (Next.js + Supabase **opcjonalnie** + model AI) łączący firmy potrzebujące wsparcia R&D z doktorantami i młodszymi badaczami.
+MVP web app (Next.js + optional Supabase + AI model) connecting companies that need R&D support with PhD candidates and early-career researchers.
 
 ### Prerequisites
 
-- **Node.js** 20+ (zalecana LTS)
-- **npm** (lub pnpm/yarn)
-- Konto **Supabase** (opcjonalnie — jeśli używasz trybu Supabase)
-- Model AI (patrz sekcja „LLM provider”) — generowanie briefów i dopasowanie
+- **Node.js** 20+ (LTS recommended)
+- **npm** (or pnpm/yarn)
+- **Supabase** account (optional — only for Supabase mode)
+- AI model access (see "LLM provider") for brief generation and matching
 
 ### Environment variables
 
-Skopiuj template i uzupełnij wartości:
+Copy the template and fill in values:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Do publicznego repo commitujemy tylko `.env.example` (bez sekretów).  
-Prawdziwe klucze API trzymaj wyłącznie w lokalnym `.env.local`.
+Only `.env.example` (without secrets) should be committed to the public repository.  
+Keep real API keys only in local `.env.local`.
 
-#### Tryb Supabase (pełna wersja — dane w Postgres)
+#### Supabase mode (full version — data in Postgres)
 
-| Zmienna | Po co |
+| Variable | Purpose |
 |--------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL projektu Supabase (Settings → API) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Klucz publiczny `anon` — odczyt z przeglądarki / Server Components (RLS) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Klucz `service_role` — **tylko serwer** (API routes): publikacja briefów, rejestracja, aplikacje |
-| `NEXT_PUBLIC_APP_ORIGIN` | (Opcjonalnie) np. `http://localhost:3000` — pełny URL w odpowiedzi po publikacji briefu |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (Settings → API) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public `anon` key — browser / Server Components access (RLS) |
+| `SUPABASE_SERVICE_ROLE_KEY` | `service_role` key — **server only** (API routes): brief publishing, registration, applications |
+| `NEXT_PUBLIC_APP_ORIGIN` | (Optional) e.g. `http://localhost:3000` — full URL in response after brief publication |
 
-#### Tryb lokalny JSON (bez Supabase — szybkie demo)
+#### Local JSON mode (without Supabase — quick demo)
 
-W tym repo domyślnie masz już w `.env`:
+This repository defaults to:
 - `USE_LOCAL_JSON_DB=true`
 
-Wtedy aplikacja czyta i zapisuje dane w pliku `data/local-db.json`.
+In this mode the app reads and writes data in `data/local-db.json`.
 
-Jeśli chcesz wrócić do Supabase, ustaw w `.env.local`:
+To switch back to Supabase, set in `.env.local`:
 - `USE_LOCAL_JSON_DB=false`
 
-#### LLM provider (briefy + profile + dopasowanie)
+#### LLM provider (briefs + profiles + matching)
 
-Projekt obsługuje jeden z backendów (auto-wybór po kluczach):
+The project supports one backend (auto-selected based on available keys):
 - `GROQ_API_KEY` (Groq; OpenAI-compatible endpoint)
 - `ANTHROPIC_API_KEY` (Claude)
-- `OPENAI_BASE_URL` + `OPENAI_API_KEY` + `OPENAI_MODEL` (dowolne API OpenAI-compatible)
+- `OPENAI_BASE_URL` + `OPENAI_API_KEY` + `OPENAI_MODEL` (any OpenAI-compatible API)
 
-Możesz wymusić backend:
+You can force a backend:
 - `AI_PROVIDER=groq | anthropic | openai_compatible`
 
 ### Database setup
 
-#### Tryb Supabase
+#### Supabase mode
 
-1. W panelu Supabase wykonaj **migracje SQL** z katalogu `supabase/migrations/` w kolejności nazw plików.
-2. (Opcjonalnie) Załaduj dane demonstracyjne:
-   - wejdź w **Supabase → SQL Editor**
-   - otwórz `supabase/seed.sql`
-   - uruchom (seed robi `TRUNCATE`, więc czyści tabele aplikacji)
+1. In the Supabase dashboard, run SQL migrations from `supabase/migrations/` in filename order.
+2. (Optional) Load demo data:
+   - go to **Supabase → SQL Editor**
+   - open `supabase/seed.sql`
+   - run it (the seed uses `TRUNCATE`, so it clears app tables)
 
-Szczegóły modelu: tabele `companies`, `briefs`, `researchers`, `researcher_projects`, `applications` oraz pola `company_access_token`, `cover_message`, `match_strengths`, `match_risks`, `match_dimensions` opisane są w migracjach.
+Data model details: tables `companies`, `briefs`, `researchers`, `researcher_projects`, `applications` and fields `company_access_token`, `cover_message`, `match_strengths`, `match_risks`, `match_dimensions` are defined in migrations.
 
-#### Tryb lokalny JSON (demo bez Supabase)
+#### Local JSON mode (demo without Supabase)
 
-Dane demo są generowane do `data/local-db.json`:
-- `make seed-local` — buduje `data/demo-local-db.json` → `data/local-db.json`
+Demo data is generated to `data/local-db.json`:
+- `make seed-local` — builds `data/demo-local-db.json` → `data/local-db.json`
 - `make play-fresh` — reset + seed-local + start
 
 ### Running locally
 
-Najprościej (demo na danych JSON):
+Fastest option (JSON demo dataset):
 
 ```bash
 make play-fresh
 ```
 
-Aplikacja: [http://localhost:3000](http://localhost:3000).
+App URL: [http://localhost:3000](http://localhost:3000).
 
-### Konta i role (nowe)
+### Accounts and roles
 
-- Rejestracja: `/auth/sign-up`
-- Logowanie: `/auth/sign-in`
-- Role kont:
-  - `company` -> panel firmy (`/company/new-brief`, zarzadzanie aplikacjami)
-  - `researcher` -> rejestracja profilu i aplikowanie (`/researcher/register`, `/researcher/apply/[briefId]`)
-- Dla kont badacza wymagany jest e-mail instytucjonalny (uczelniany), co pelni role potwierdzenia afiliacji.
+- Registration: `/auth/sign-up`
+- Sign in: `/auth/sign-in`
+- Account roles:
+  - `company` -> company panel (`/company/new-brief`, application management)
+  - `researcher` -> profile registration and application flow (`/researcher/register`, `/researcher/apply/[briefId]`)
+- Researcher accounts require an institutional email address to confirm affiliation.
 
-Jeśli coś „stoi” na porcie albo chcesz czyścić dane:
+If something is occupying the port or you want to clean local data:
 
 ```bash
 make reset
 ```
 
-Sprawdzenie integracji:
+Integration check:
 
 ```bash
 curl -s http://localhost:3000/api/health
 ```
 
-Odpowiedź JSON zawiera m.in.:
+The JSON response includes:
 - `supabase`: `ok | error | local`
 - `llm`: `ok | error`
 
 ### Day 1 features
 
-- Landing, nawigacja, lista **opublikowanych briefów** z filtrami (`/briefs`)
-- Flow firmy: wieloetapowy formularz, generowanie briefu AI, publikacja (`/company/new-brief`)
-- **Token** w `company_access_token` i panel aplikacji dla firmy (`/company/briefs/[id]/applications?token=...`)
-- Rejestracja profilu badacza (`/researcher/register`) z **AI Profile Builderem** i publiczny profil (`/researcher/[id]`)
-- Dashboard doktoranta (`/researcher/[id]/dashboard`) z klasyfikacją dorobku, rekomendowanymi briefami i aplikacjami
-- Aplikacja na brief z **wymiarową oceną dopasowania** AI (`/researcher/apply/[briefId]`)
+- Landing page, navigation, list of **published briefs** with filters (`/briefs`)
+- Company flow: multi-step form, AI brief generation, publication (`/company/new-brief`)
+- **Token** in `company_access_token` and company applications panel (`/company/briefs/[id]/applications?token=...`)
+- Researcher profile registration (`/researcher/register`) with **AI Profile Builder** and public profile (`/researcher/[id]`)
+- PhD dashboard (`/researcher/[id]/dashboard`) with profile classification, recommended briefs, and applications
+- Brief application with **dimensional AI match scoring** (`/researcher/apply/[briefId]`)
 - API: `/api/briefs/generate`, `/api/briefs/publish`, `/api/researcher/profile-build`, `/api/researcher/register`, `/api/applications/submit`, `/api/applications/status`, `/api/health`
 
 ### What's NOT in v1
 
-- Pełna **autentykacja** użytkowników (logowanie firmy/badacza przez OAuth/hasło)
-- **Płatności** i rozliczenia
-- **Powiadomienia e-mail** (link do briefu z tokenem trzeba przekazać firmie inną drogą)
-- Zaawansowany audyt, załączniki, chat, wielojęzyczność UI poza polskim copy przygotowanym na Day 1
+- Full user **authentication** (company/researcher login via OAuth/password)
+- **Payments** and billing
+- **Email notifications** (brief link with token must be shared through another channel)
+- Advanced audit, attachments, chat, full UI multilingual support beyond Day 1 copy
 
-Roadmapę kolejnych etapów warto trzymać w osobnym dokumencie lub issue trackerze zespołu.
+Keep later-phase roadmap items in a separate document or team issue tracker.
 
 ### Tests
 
@@ -129,18 +129,18 @@ npm test
 
 ### Scripts
 
-| Komenda | Opis |
+| Command | Description |
 |--------|------|
-| `npm run dev` | Serwer developerski Next.js |
-| `npm run build` | Build produkcyjny |
-| `npm run start` | Start po buildzie |
+| `npm run dev` | Next.js development server |
+| `npm run build` | Production build |
+| `npm run start` | Start after build |
 | `npm run lint` | ESLint |
-| `npm test` | Testy Jest |
+| `npm test` | Jest tests |
 
-### Makefile (lokalny workflow)
+### Makefile (local workflow)
 
 - `make install` — `npm install`
-- `make reset` — usuwa `data/local-db.json` oraz `.next`
-- `make seed-local` — buduje `data/demo-local-db.json` → `data/local-db.json`
-- `make play` — zwalnia port, kopiuje demo jeśli brakuje `data/local-db.json`, uruchamia `next dev`
+- `make reset` — removes `data/local-db.json` and `.next`
+- `make seed-local` — builds `data/demo-local-db.json` → `data/local-db.json`
+- `make play` — frees port, copies demo data if `data/local-db.json` is missing, starts `next dev`
 - `make play-fresh` — `reset` + `seed-local` + `play`

@@ -52,30 +52,30 @@ const researcherTestData = {
   first_name: "Anna",
   last_name: "Kowalska",
   email: "anna.kowalska.demo@neuronauts.pl",
-  institution: "Politechnika Warszawska, Wydzial Elektroniki i Technik Informacyjnych",
+  institution: "Warsaw University of Technology, Faculty of Electronics and Information Technology",
   phd_start_year: Math.max(2010, currentYear - 2),
-  research_subdomain: "Predykcyjne utrzymanie ruchu i analiza danych produkcyjnych",
+  research_subdomain: "Predictive maintenance and analysis of production data",
   research_description:
-    "Prowadze badania nad modelami predykcji awarii i optymalizacja parametrow procesow przemyslowych. Lacze metody statystyczne, uczenie maszynowe i analize przyczynowa, aby poprawiac jakosc produktow oraz skracac czas reakcji na odchylenia procesu.",
+    "I work on failure prediction models and optimization of industrial process parameters. I combine statistical methods, machine learning, and causal analysis to improve product quality and shorten response time to process deviations.",
   practical_skills: [
-    "Analiza danych (Python/R)",
-    "Modelowanie statystyczne",
-    "Projektowanie eksperymentow",
-    "Pisanie raportow technicznych",
+    "Data analysis (Python/R)",
+    "Statistical modeling",
+    "Design of experiments",
+    "Technical reporting",
   ],
   projects: [
     {
-      title: "Model predykcji awarii w linii montazowej SMT",
+      title: "Failure prediction model for an SMT assembly line",
       description:
-        "Przygotowalam pipeline danych i model klasyfikacyjny, ktory przewiduje ryzyko defektu na etapie testow koncowych.",
+        "Built a data pipeline and a classification model that estimates defect risk at end-of-line testing.",
       type: "research" as const,
       year_from: currentYear - 2,
       year_to: currentYear - 1,
     },
     {
-      title: "Wspolpraca z zakladem produkcyjnym nad optymalizacja zuzycia energii",
+      title: "Industry collaboration on energy use optimization",
       description:
-        "W projekcie wypracowalam zestaw KPI i rekomendacje zmian parametrow procesu, co ograniczylo zuzycie energii.",
+        "Defined KPIs and recommended process parameter changes that reduced energy consumption.",
       type: "industry" as const,
       year_from: currentYear - 1,
       year_to: currentYear,
@@ -84,13 +84,13 @@ const researcherTestData = {
   availability_hours_per_week: 16,
   availability_modes: ["consultation", "proof_of_concept", "small_rd_project"] as const,
   motivation:
-    "Chce wspolpracowac z firmami, bo zalezy mi na praktycznym wdrazaniu wynikow badan i mierzalnym efekcie biznesowym. Potrafie tlumaczyc zlozone wyniki na konkretne decyzje projektowe, szybko iterowac hipotezy i pracowac w interdyscyplinarnych zespolach, laczac perspektywe naukowa z realiami operacyjnymi.",
+    "I want to work with industry because I care about applying research outcomes in practice and delivering measurable business impact. I can translate complex results into engineering decisions, iterate quickly on hypotheses, and collaborate in cross-functional teams, bridging academic rigor with operational constraints.",
   publication_links: [
     "https://scholar.google.com/citations?user=demoResearcher",
     "https://orcid.org/0000-0002-1825-0097",
   ],
   profileSource:
-    "Doktorantka zajmujaca sie predykcja awarii i optymalizacja procesow przemyslowych. Pracuje na danych z produkcji, laczac modele ML, metody statystyczne i eksperymenty procesowe. Realizowalam projekty badawcze i wdrozeniowe z firmami, przygotowuje raporty techniczne i rekomendacje implementacyjne.",
+    "PhD researcher focused on failure prediction and optimization of industrial processes. I work with production data, combining ML, statistical methods, and process experiments. I have delivered research and implementation projects with companies and produce technical reports and rollout recommendations.",
 };
 
 const WIZARD_STEPS = [
@@ -237,7 +237,7 @@ export default function ResearcherRegisterPage() {
   async function runProfileBuilder() {
     setProfileBuildError(null);
     if (profileSource.trim().length < 80) {
-      setProfileBuildError("Paste at least 80 characters opisu, CV albo notatek.");
+      setProfileBuildError("Paste at least 80 characters from your description, CV excerpt, or notes.");
       return;
     }
     setProfileBuildLoading(true);
@@ -430,14 +430,14 @@ export default function ResearcherRegisterPage() {
           <section className="mb-8 rounded-xl border border-indigo-100 bg-indigo-50/60 p-5">
             <h2 className="text-base font-semibold text-gray-900">AI Profile Builder</h2>
             <p className="mt-1 text-sm text-gray-600">
-              Wklej opis badań, fragment CV, abstrakt pracy albo notatki. AI przełoży je na pola
-              profilu, które możesz potem ręcznie poprawić.
+              Paste a research summary, CV excerpt, paper abstract, or notes. AI will map them to profile
+              fields you can refine afterward.
             </p>
             <textarea
               rows={6}
               value={profileSource}
               onChange={(e) => setProfileSource(e.target.value)}
-              placeholder="Np. badam optymalizację tras serwisowych, pracowałem/am z OR-Tools i Pythonem..."
+              placeholder="E.g. I optimize service routing; I have used OR-Tools and Python..."
               className={`${inputClass} mt-4 bg-white`}
             />
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -498,7 +498,7 @@ export default function ResearcherRegisterPage() {
           </div>
           <div className="pt-4">
             <label htmlFor="email" className={labelClass}>
-              Adres email <span className="text-red-500">*</span>
+              Email address <span className="text-red-500">*</span>
             </label>
             <input
               id="email"
@@ -520,7 +520,7 @@ export default function ResearcherRegisterPage() {
               id="institution"
               type="text"
               autoComplete="organization"
-              placeholder="np. Politechnika Warszawska, Wydział Mechatroniki"
+              placeholder="e.g. University of Warsaw, Faculty of Mechatronics"
               className={inputClass}
               {...register("institution")}
             />
@@ -548,7 +548,7 @@ export default function ResearcherRegisterPage() {
             </div>
             <div>
               <span className={labelClass}>
-                Etap <span className="text-red-500">*</span>
+                Stage <span className="text-red-500">*</span>
               </span>
               <div className="flex flex-col gap-1 pt-1">
                 {stageOptions.map((opt) => (
@@ -590,11 +590,11 @@ export default function ResearcherRegisterPage() {
           </div>
           </>) /* end step 1 */}
           {wizardStep === 2 && (<>
-          {/* SECTION 2: Obszar badań */}
-          <h2 className={sectionHeaderClass}>Obszar badań</h2>
+          {/* SECTION 2: Research focus */}
+          <h2 className={sectionHeaderClass}>Research focus</h2>
           <div className="pt-4">
             <label htmlFor="research_domain" className={labelClass}>
-              Dziedzina <span className="text-red-500">*</span>
+              Field <span className="text-red-500">*</span>
             </label>
             <select
               id="research_domain"
@@ -603,7 +603,7 @@ export default function ResearcherRegisterPage() {
               {...register("research_domain")}
             >
               <option value="" disabled>
-                — Wybierz —
+                — Select —
               </option>
               {researchDomainOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -617,31 +617,30 @@ export default function ResearcherRegisterPage() {
           </div>
           <div className="pt-4">
             <label htmlFor="research_subdomain" className={labelClass}>
-              Subdyscyplina (opcjonalnie)
+              Sub-discipline (optional)
             </label>
             <input
               id="research_subdomain"
               type="text"
-              placeholder="np. uczenie maszynowe, chemia polimerów, epidemiologia"
+              placeholder="e.g. machine learning, polymer chemistry, epidemiology"
               className={inputClass}
               {...register("research_subdomain")}
             />
           </div>
           <div className="pt-4">
             <label htmlFor="research_description" className={labelClass}>
-              Czym się zajmujesz? (własnymi słowami){" "}
+              What do you work on? (in your own words){" "}
               <span className="text-red-500">*</span>
             </label>
             <textarea
               id="research_description"
               rows={5}
-              placeholder="Opisz swoje badania tak, żeby zrozumiał je ktoś spoza akademii..."
+              placeholder="Describe your research so someone outside academia can understand it..."
               className={inputClass}
               {...register("research_description")}
             />
             <p className={helpClass}>
-              Nie musisz używać fachowej nomenklatury. Napisz, jaki problem
-              badasz i dlaczego to ważne. ({description.length}/80)
+              You do not need heavy jargon. State the problem you study and why it matters. ({description.length}/80)
             </p>
             {errors.research_description ? (
               <p className={errorClass}>
@@ -650,8 +649,8 @@ export default function ResearcherRegisterPage() {
             ) : null}
           </div>
 
-          {/* SECTION 3: Co możesz zrobić dla firmy? */}
-          <h2 className={sectionHeaderClass}>Co możesz zrobić dla firmy?</h2>
+          {/* SECTION 3: What you can offer industry */}
+          <h2 className={sectionHeaderClass}>What you can offer industry</h2>
           <div className="pt-4">
             <span className={labelClass}>
               Practical skills <span className="text-red-500">*</span>
@@ -677,7 +676,7 @@ export default function ResearcherRegisterPage() {
             <input
               ref={skillInputRef}
               type="text"
-              placeholder="Wpisz umiejętność i naciśnij Enter"
+              placeholder="Enter a skill and press Enter"
               className={inputClass}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === ",") {
@@ -692,13 +691,13 @@ export default function ResearcherRegisterPage() {
               }}
             />
             <p className={helpClass}>
-              Zamiast „badam algorytmy” → „optymalizuję procesy statystyczne”.
-              Zamiast „zajmuję się NLP” → „automatyzuję analizę dokumentów
-              tekstowych”.
+              Instead of “I study algorithms” → “I optimize statistical processes.”
+              Instead of “I do NLP” → “I automate analysis of text
+              documents.”
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="text-xs text-gray-500 mr-1 self-center">
-                Sugestie:
+                Suggestions:
               </span>
               {skillSuggestions.map((suggestion) => {
                 const already = skills.some(
@@ -724,7 +723,7 @@ export default function ResearcherRegisterPage() {
             {errors.practical_skills ? (
               <p className={errorClass}>
                 {(errors.practical_skills as { message?: string })?.message ||
-                  "Sprawdź wprowadzone umiejętności"}
+                  "Review the skills you entered"}
               </p>
             ) : null}
           </div>
@@ -747,8 +746,8 @@ export default function ResearcherRegisterPage() {
           </div>
           </>) /* end step 2 */}
           {wizardStep === 3 && (<>
-          {/* SECTION 4: Projects i doświadczenie */}
-          <h2 className={sectionHeaderClass}>Projects i doświadczenie</h2>
+          {/* SECTION 4: Projects and experience */}
+          <h2 className={sectionHeaderClass}>Projects and experience</h2>
           <div className="pt-4 space-y-4">
             {projects.fields.map((field, idx) => {
               const projectErrors = errors.projects?.[idx];
@@ -759,7 +758,7 @@ export default function ResearcherRegisterPage() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <span className="text-xs font-semibold text-gray-500 uppercase">
-                      Projekt {idx + 1}
+                      Project {idx + 1}
                     </span>
                     {projects.fields.length > 1 ? (
                       <button
@@ -773,7 +772,7 @@ export default function ResearcherRegisterPage() {
                   </div>
                   <div>
                     <label className={labelClass}>
-                      Tytuł <span className="text-red-500">*</span>
+                      Title <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -787,23 +786,23 @@ export default function ResearcherRegisterPage() {
                     ) : null}
                   </div>
                   <div>
-                    <label className={labelClass}>Opis (opcjonalnie)</label>
+                    <label className={labelClass}>Description (optional)</label>
                     <textarea
                       rows={3}
-                      placeholder="Co robiłeś/aś, czego się nauczyłeś/aś?"
+                      placeholder="What you did and what you learned"
                       className={inputClass}
                       {...register(`projects.${idx}.description` as const)}
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className={labelClass}>Typ</label>
+                      <label className={labelClass}>Type</label>
                       <select
                         className={inputClass}
                         defaultValue=""
                         {...register(`projects.${idx}.type` as const)}
                       >
-                        <option value="">— Wybierz —</option>
+                        <option value="">— Select —</option>
                         {projectTypeOptions.map((opt) => (
                           <option key={opt.value} value={opt.value}>
                             {opt.label}
@@ -856,7 +855,7 @@ export default function ResearcherRegisterPage() {
               </button>
             ) : (
               <p className="text-xs text-gray-500">
-                Osiągnięto limit 6 projektów.
+                Maximum of six projects reached.
               </p>
             )}
             {errors.projects && !Array.isArray(errors.projects) ? (
@@ -870,7 +869,7 @@ export default function ResearcherRegisterPage() {
           <h2 className={sectionHeaderClass}>Availability</h2>
           <div className="pt-4">
             <label htmlFor="availability_hours" className={labelClass}>
-              Ile godzin tygodniowo możesz poświęcić?{" "}
+              How many hours per week can you commit?{" "}
               <span className="text-red-500">*</span>
             </label>
             <div className="flex items-center gap-4">
@@ -897,7 +896,7 @@ export default function ResearcherRegisterPage() {
           </div>
           <div className="pt-4">
             <span className={labelClass}>
-              Jakie formy współpracy cię interesują?{" "}
+              Which collaboration formats interest you?{" "}
               <span className="text-red-500">*</span>
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
@@ -934,7 +933,7 @@ export default function ResearcherRegisterPage() {
             {errors.availability_modes ? (
               <p className={errorClass}>
                 {(errors.availability_modes as { message?: string })?.message ||
-                  "Wybierz przynajmniej jedną formę"}
+                  "Select at least one format"}
               </p>
             ) : null}
           </div>
@@ -943,14 +942,14 @@ export default function ResearcherRegisterPage() {
           <h2 className={sectionHeaderClass}>Motivation</h2>
           <div className="pt-4">
             <label htmlFor="motivation" className={labelClass}>
-              Dlaczego chcesz współpracować z biznesem?{" "}
+              Why do you want to collaborate with industry?{" "}
               <span className="text-red-500">*</span>
             </label>
             <textarea
               id="motivation"
               rows={5}
               maxLength={600}
-              placeholder="Napisz kilka zdań o tym, co cię motywuje do pracy z firmami. Co chcesz osiągnąć? Co możesz dać firmom, czego nie znajdą gdzie indziej?"
+              placeholder="Write a few sentences on what motivates you to work with companies, what you want to achieve, and what you offer that is hard to find elsewhere."
               className={inputClass}
               {...register("motivation")}
             />
@@ -959,19 +958,19 @@ export default function ResearcherRegisterPage() {
                 motivationCount > 600 ? "text-red-600" : ""
               }`}
             >
-              {motivationCount} / 600 znaków
+              {motivationCount} / 600 characters
             </p>
             {errors.motivation ? (
               <p className={errorClass}>{errors.motivation.message}</p>
             ) : null}
           </div>
 
-          {/* SECTION 7: Publikacje (opcjonalne) */}
-          <h2 className={sectionHeaderClass}>Publikacje (opcjonalne)</h2>
+          {/* SECTION 7: Publications (optional) */}
+          <h2 className={sectionHeaderClass}>Publications (optional)</h2>
           <div className="pt-4 space-y-3">
             <p className={helpClass}>
-              Opcjonalne. Nie oceniamy liczby publikacji — to tylko kontekst dla
-              firm.
+              Optional. We do not score you on publication count — this is context for
+              companies.
             </p>
             {publicationLinks.fields.map((field, idx) => (
               <PublicationLinkRow
@@ -1052,7 +1051,7 @@ function PublicationLinkRow({
       ? "[GS] Google Scholar"
       : idx === 1
         ? "[ID] ORCID"
-        : "Link do profilu naukowego";
+        : "Research profile link";
   return (
     <div>
       <label className="text-xs font-medium text-gray-600 mb-1 block">
@@ -1061,7 +1060,7 @@ function PublicationLinkRow({
       <div className="flex gap-2">
         <input
           type="url"
-          placeholder="https://scholar.google.com/... lub https://doi.org/..."
+          placeholder="https://scholar.google.com/... or https://doi.org/..."
           className={inputClass}
           {...register(`publication_links.${idx}` as const)}
         />

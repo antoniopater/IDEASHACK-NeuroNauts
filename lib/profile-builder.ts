@@ -4,30 +4,30 @@ import {
   type ProfileBuilderResponse,
 } from "@/lib/validations";
 
-export const PROFILE_BUILDER_SYSTEM_PROMPT = `Pomagasz doktorantowi lub doktorowi opisać profil dla firm szukających współpracy R&D.
-Zwróć TYLKO JSON zgodny ze schematem:
+export const PROFILE_BUILDER_SYSTEM_PROMPT = `You help a PhD candidate or PhD graduate describe a profile for companies seeking R&D collaboration.
+Return ONLY JSON matching this schema:
 {
-  "research_subdomain": "<krótka subdyscyplina lub obszar specjalizacji>",
-  "research_description": "<80-4000 znaków, po polsku, zrozumiale dla firmy>",
-  "practical_skills": ["<3-12 konkretnych umiejętności praktycznych>"],
+  "research_subdomain": "<short subdiscipline or specialization area>",
+  "research_description": "<80-4000 characters, in English, understandable for a company>",
+  "practical_skills": ["<3-12 specific practical skills>"],
   "projects": [
     {
-      "title": "<nazwa projektu>",
-      "description": "<co zrobiono i jaki był rezultat>",
+      "title": "<project title>",
+      "description": "<what was done and what was the outcome>",
       "type": "research|industry|internship|consultation|student_circle|other",
       "year_from": 2023,
       "year_to": 2024
     }
   ],
-  "motivation": "<100-600 znaków: dlaczego ta osoba chce współpracować z firmami>",
+  "motivation": "<100-600 characters: why this person wants to collaborate with companies>",
   "publication_links": ["<URL>"]
 }
 
-Zasady:
-- Nie wymyślaj publikacji, lat ani instytucji. Jeśli nie ma danych, pomiń opcjonalne pola.
-- Tłumacz język akademicki na praktyczne kompetencje.
-- Nie obiecuj wdrożeń ani certyfikatów, których nie ma w tekście.
-- Doktorant bez publikacji nadal może mieć silny profil, jeśli ma projekty i umiejętności.`;
+Rules:
+- Do not invent publications, years, or institutions. If data is missing, omit optional fields.
+- Translate academic language into practical competencies.
+- Do not promise implementations or certifications not present in the source text.
+- A PhD candidate without publications can still have a strong profile if they have projects and skills.`;
 
 export function buildProfileBuilderUserPrompt(input: {
   rawText: string;
@@ -35,12 +35,12 @@ export function buildProfileBuilderUserPrompt(input: {
   research_domain?: string;
   publication_links?: string[];
 }): string {
-  return `KONTEKST PROFILU:
-Etap kariery: ${input.stage ?? "—"}
-Dziedzina: ${input.research_domain ?? "—"}
-Linki publikacji podane przez użytkownika: ${(input.publication_links ?? []).join(", ") || "—"}
+  return `PROFILE CONTEXT:
+Career stage: ${input.stage ?? "—"}
+Domain: ${input.research_domain ?? "—"}
+Publication links provided by the user: ${(input.publication_links ?? []).join(", ") || "—"}
 
-SUROWY OPIS / CV / NOTATKI:
+RAW DESCRIPTION / CV / NOTES:
 ${input.rawText}`;
 }
 
@@ -48,7 +48,7 @@ export function parseProfileBuilderResponse(rawText: string): ProfileBuilderResp
   const obj = parseJsonObjectFromText(rawText);
   const parsed = profileBuilderResponseSchema.safeParse(obj);
   if (!parsed.success) {
-    throw new Error("Nieprawidłowy format odpowiedzi AI Profile Buildera.");
+    throw new Error("Invalid AI Profile Builder response format.");
   }
   return parsed.data;
 }

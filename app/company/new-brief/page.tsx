@@ -24,27 +24,27 @@ const emptyBrief: AiBriefContent = {
 
 const companyTestPayload = {
   problem:
-    "Produkujemy moduły elektroniki mocy i chcemy ograniczyc zuzycie energii oraz odsetek reklamacji po testach koncowych. Obecnie nie umiemy dobrze przewidywac awarii i nie mamy modelu, ktory laczy dane z linii SMT, testow EOL oraz warunkow magazynowania.",
+    "We manufacture power electronics modules and want to reduce energy consumption and the share of returns after end-of-line testing. We currently struggle to predict failures well and lack a model that combines data from the SMT line, EOL tests, and storage conditions.",
   expectedResult:
-    "Dzialajacy proof-of-concept predykcji ryzyka awarii + plan wdrozenia monitoringu procesu i rekomendacje parametrow technologicznych.",
+    "A working proof of concept for failure-risk prediction plus a plan for process monitoring and recommendations for process parameters.",
   companyName: "NeuroNauts Manufacturing",
   brief: {
     cel_rd:
-      "Zaprojektowac i zweryfikowac podejscie do predykcji awarii oraz obnizenia zuzycia energii w procesie produkcji elektroniki mocy.",
+      "Design and validate an approach to predicting failures and lowering energy use in power electronics manufacturing.",
     wymagane_kompetencje: [
-      "Analiza danych procesowych i telemetrycznych (Python, SQL)",
-      "Modelowanie statystyczne i uczenie maszynowe dla predykcji jakosci",
-      "Znajomosc procesow produkcyjnych elektroniki (SMT/EOL) i DOE",
-      "Umiejetnosc przekladania wynikow badan na rekomendacje wdrozeniowe",
+      "Process and telemetry data analysis (Python, SQL)",
+      "Statistical modeling and machine learning for quality prediction",
+      "Familiarity with electronics manufacturing (SMT/EOL) and design of experiments",
+      "Ability to translate research results into implementation recommendations",
     ],
     zakres_projektu:
-      "Audyt danych historycznych, przygotowanie cech, budowa modeli predykcyjnych, walidacja na partiach produkcyjnych i przygotowanie planu integracji z obecnym raportowaniem.",
+      "Historical data audit, feature preparation, predictive model development, validation on production batches, and an integration plan with existing reporting.",
     oczekiwany_rezultat:
-      "Raport z metrykami modelu, lista kluczowych czynnikow ryzyka, rekomendacje zmian procesu oraz backlog krokow wdrozeniowych na kolejne 8 tygodni.",
+      "Report with model metrics, list of key risk factors, process change recommendations, and an implementation backlog for the next eight weeks.",
     pierwszy_milestone:
-      "W ciagu 2 tygodni: konsolidacja danych z 3 zrodel i baseline model do predykcji awarii.",
+      "Within two weeks: consolidate data from three sources and a baseline model for failure prediction.",
     suggested_researcher_profile:
-      "Doktorant lub postdoc z doswiadczeniem w data science dla produkcji, modelowaniu procesow i pracy z danymi przemyslowymi.",
+      "PhD student or postdoc with experience in data science for manufacturing, process modeling, and industrial datasets.",
   } satisfies AiBriefContent,
 };
 
@@ -204,11 +204,11 @@ export default function NewBriefPage() {
       return;
     }
     if (!timeline) {
-      setStep1Error("Wybierz horyzont czasowy.");
+      setStep1Error("Select a project timeline.");
       return;
     }
     if (!budget) {
-      setStep1Error("Wybierz orientacyjny budżet.");
+      setStep1Error("Select an indicative budget.");
       return;
     }
     setStep(2);
@@ -238,15 +238,15 @@ export default function NewBriefPage() {
     e.preventDefault();
     setPublishError(null);
     if (!companyName.trim()) {
-      setPublishError("Podaj nazwę firmy.");
+      setPublishError("Enter the company name.");
       return;
     }
     if (!companyEmail.trim()) {
-      setPublishError("Podaj adres e-mail.");
+      setPublishError("Enter an email address.");
       return;
     }
     if (!confirmPublish) {
-      setPublishError("Zaznacz potwierdzenie publikacji.");
+      setPublishError("Confirm that you want to publish.");
       return;
     }
     setPublishing(true);
@@ -273,7 +273,7 @@ export default function NewBriefPage() {
         error?: string;
       };
       if (!res.ok) {
-        setPublishError(data.error || "Publikacja nie powiodła się.");
+        setPublishError(data.error || "Publishing failed.");
         return;
       }
       if (data.briefId) {
@@ -281,7 +281,7 @@ export default function NewBriefPage() {
         setSuccessManageUrl(data.applicationsManageUrl ?? null);
       }
     } catch {
-      setPublishError("Błąd sieci. Spróbuj ponownie.");
+      setPublishError("Network error. Please try again.");
     } finally {
       setPublishing(false);
     }
@@ -296,7 +296,7 @@ export default function NewBriefPage() {
         <div className="max-w-lg mx-auto rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Brief published</h1>
           <p className="text-gray-600 text-sm mb-6">
-            Twój brief jest już widoczny dla badaczy. Identyfikator:{" "}
+            Your brief is now visible to researchers. ID:{" "}
             <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">{successBriefId}</code>
           </p>
           <Link
@@ -310,7 +310,7 @@ export default function NewBriefPage() {
               href={successManageUrl}
               className="ml-3 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 hover:bg-gray-50 transition-colors"
             >
-              Zarządzaj aplikacjami
+              Manage applications
             </Link>
           ) : null}
         </div>
@@ -339,13 +339,13 @@ export default function NewBriefPage() {
 
         {authLoading ? (
           <div className="rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm">
-            <p className="text-sm text-gray-600">Sprawdzam sesje...</p>
+            <p className="text-sm text-gray-600">Checking session…</p>
           </div>
         ) : authError ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-6 sm:p-8 shadow-sm">
             <p className="text-sm text-red-700">{authError}</p>
             <Link href="/auth/sign-in" className="mt-3 inline-block text-sm font-medium text-indigo-600">
-              Przejdz do logowania
+              Go to sign in
             </Link>
           </div>
         ) : null}
@@ -361,7 +361,7 @@ export default function NewBriefPage() {
             ) : null}
             <div>
               <label htmlFor="problem" className="block text-sm font-medium text-gray-700 mb-1">
-                Opisz problem lub wyzwanie technologiczne <span className="text-red-500">*</span>
+                Describe the problem or technology challenge <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="problem"
@@ -370,11 +370,11 @@ export default function NewBriefPage() {
                 rows={5}
                 value={problem}
                 onChange={(e) => setProblem(e.target.value)}
-                placeholder="Np. Mamy problem z optymalizacją zużycia energii w hali produkcyjnej. Tradycyjne metody nie wystarczają..."
+                placeholder="E.g. We need to optimize energy use on our production floor. Traditional methods are not enough..."
                 className={inputClass}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Minimum 50 znaków ({problem.trim().length}/50)
+                Minimum 50 characters ({problem.trim().length}/50)
               </p>
             </div>
             <div>
@@ -388,7 +388,7 @@ export default function NewBriefPage() {
                 onChange={(e) => setIndustry(e.target.value)}
                 className={inputClass}
               >
-                <option value="">— Wybierz —</option>
+                <option value="">— Select —</option>
                 {industryOptions.map((opt) => (
                   <option key={opt} value={opt}>
                     {opt}
@@ -398,7 +398,7 @@ export default function NewBriefPage() {
             </div>
             <fieldset>
               <legend className="block text-sm font-medium text-gray-700 mb-2">
-                Horyzont czasowy projektu <span className="text-red-500">*</span>
+                Project timeline <span className="text-red-500">*</span>
               </legend>
               <div className="space-y-2">
                 {timelineOptions.map((opt) => (
@@ -418,7 +418,7 @@ export default function NewBriefPage() {
             </fieldset>
             <div>
               <label htmlFor="budget" className="block text-sm font-medium text-gray-700 mb-1">
-                Orientacyjny budżet <span className="text-red-500">*</span>
+                Indicative budget <span className="text-red-500">*</span>
               </label>
               <select
                 id="budget"
@@ -427,7 +427,7 @@ export default function NewBriefPage() {
                 onChange={(e) => setBudget(e.target.value)}
                 className={inputClass}
               >
-                <option value="">— Wybierz —</option>
+                <option value="">— Select —</option>
                 {budgetOptions.map((opt) => (
                   <option key={opt} value={opt}>
                     {opt}
@@ -444,7 +444,7 @@ export default function NewBriefPage() {
                 rows={3}
                 value={expectedResult}
                 onChange={(e) => setExpectedResult(e.target.value)}
-                placeholder="Np. Raport z rekomendacjami, działający prototyp, analiza literatury..."
+                placeholder="E.g. Report with recommendations, working prototype, literature review..."
                 className={inputClass}
               />
             </div>
@@ -453,7 +453,7 @@ export default function NewBriefPage() {
                 type="submit"
                 className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
               >
-                Generuj brief
+                Generate brief
               </button>
             </div>
           </form>
@@ -471,7 +471,7 @@ export default function NewBriefPage() {
         {!authLoading && !authError && step === 2 && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h2 className="text-lg font-medium text-gray-900">Twój brief R&D</h2>
+              <h2 className="text-lg font-medium text-gray-900">Your R&D brief</h2>
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
@@ -486,7 +486,7 @@ export default function NewBriefPage() {
                   onClick={() => setStep(1)}
                   className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
                 >
-                  Wróć do edycji
+                  Back to editing
                 </button>
               </div>
             </div>
@@ -532,9 +532,9 @@ export default function NewBriefPage() {
                             type="button"
                             onClick={() => removeCompetence(idx)}
                             className="mt-1 text-xs text-gray-500 hover:text-red-600 px-2 py-1"
-                            aria-label="Usuń punkt"
+                            aria-label="Remove item"
                           >
-                            Usuń
+                            Remove
                           </button>
                         </li>
                       ))}
@@ -544,7 +544,7 @@ export default function NewBriefPage() {
                       onClick={addCompetence}
                       className="mt-3 text-sm font-medium text-indigo-600 hover:text-indigo-800"
                     >
-                      + Dodaj kompetencję
+                      + Add competency
                     </button>
                   </section>
                   <section>
@@ -575,7 +575,7 @@ export default function NewBriefPage() {
                     />
                   </section>
                   <section>
-                    <h3 className="text-sm font-bold text-gray-900 mb-2">Researcher profile (sugestia AI)</h3>
+                    <h3 className="text-sm font-bold text-gray-900 mb-2">Researcher profile (AI suggestion)</h3>
                     <textarea
                       value={brief.suggested_researcher_profile}
                       onChange={(e) =>
@@ -593,7 +593,7 @@ export default function NewBriefPage() {
                     onClick={() => setStep(3)}
                     className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
                   >
-                    Dalej: potwierdź i opublikuj
+                    Next: confirm and publish
                   </button>
                 </div>
               </>
@@ -606,9 +606,9 @@ export default function NewBriefPage() {
             onSubmit={handlePublish}
             className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 sm:p-8 shadow-sm"
           >
-            <h2 className="text-lg font-medium text-gray-900">Potwierdź i opublikuj</h2>
+            <h2 className="text-lg font-medium text-gray-900">Confirm and publish</h2>
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-5 space-y-4 text-sm text-gray-800">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Podgląd briefu</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Brief preview</p>
               <h3 className="text-base font-semibold text-gray-900">{deriveBriefTitle(brief.cel_rd)}</h3>
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs text-gray-700">
@@ -634,7 +634,7 @@ export default function NewBriefPage() {
                   </ul>
                 </div>
                 <p className="whitespace-pre-wrap">
-                  <strong className="text-gray-900">Zakres:</strong> {brief.zakres_projektu}
+                  <strong className="text-gray-900">Scope:</strong> {brief.zakres_projektu}
                 </p>
                 <p className="whitespace-pre-wrap">
                   <strong className="text-gray-900">Expected result:</strong> {brief.oczekiwany_rezultat}
@@ -666,7 +666,7 @@ export default function NewBriefPage() {
             </div>
             <div>
               <label htmlFor="coEmail" className="block text-sm font-medium text-gray-700 mb-1">
-                E-mail firmowy <span className="text-red-500">*</span>
+                Company email <span className="text-red-500">*</span>
               </label>
               <input
                 id="coEmail"
@@ -685,7 +685,7 @@ export default function NewBriefPage() {
                 className="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-300"
               />
               <span className="text-sm text-gray-700">
-                Potwierdzam, że chcę opublikować ten brief i otrzymywać zgłoszenia od badaczy
+                I confirm that I want to publish this brief and receive applications from researchers
               </span>
             </label>
             {publishError ? (
@@ -699,14 +699,14 @@ export default function NewBriefPage() {
                 onClick={() => setStep(2)}
                 className="text-sm font-medium text-gray-600 hover:text-gray-900"
               >
-                ← Wróć do edycji briefu
+                ← Back to brief editing
               </button>
               <button
                 type="submit"
                 disabled={publishing}
                 className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
               >
-                {publishing ? "Publikuję…" : "Publish brief"}
+                {publishing ? "Publishing…" : "Publish brief"}
               </button>
             </div>
           </form>

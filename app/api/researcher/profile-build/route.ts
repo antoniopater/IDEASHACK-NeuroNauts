@@ -13,13 +13,13 @@ export async function POST(req: Request) {
   try {
     json = await req.json();
   } catch {
-    return NextResponse.json({ error: "Nieprawidłowe ciało żądania JSON." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
   }
 
   const parsed = profileBuilderInputSchema.safeParse(json);
   if (!parsed.success) {
     const msg = parsed.error.issues.map((i) => i.message).join(" ");
-    return NextResponse.json({ error: msg || "Walidacja nie powiodła się." }, { status: 400 });
+    return NextResponse.json({ error: msg || "Validation failed." }, { status: 400 });
   }
 
   if (!hasLlmConfigured()) {
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ profile: parseProfileBuilderResponse(text) });
   } catch (err) {
     const status =
-      err instanceof Error && err.message.includes("Nieprawidłowy format") ? 502 : 500;
+      err instanceof Error && err.message.includes("Invalid format") ? 502 : 500;
     return NextResponse.json(
       { error: llmErrorToUserMessage(err, "brief") },
       { status }

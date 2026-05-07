@@ -6,10 +6,10 @@ import { useState } from "react";
 type MatchDimensions = Record<string, { score: number; rationale: string }>;
 
 const dimensionLabels: Record<string, string> = {
-  domain_fit: "Dziedzina",
-  skills_fit: "Kompetencje",
-  availability_fit: "Dostępność",
-  motivation_fit: "Motywacja",
+  domain_fit: "Domain",
+  skills_fit: "Skills",
+  availability_fit: "Availability",
+  motivation_fit: "Motivation",
 };
 
 export default function ApplyFormClient({
@@ -33,11 +33,11 @@ export default function ApplyFormClient({
     e.preventDefault();
     setError(null);
     if (coverMessage.trim().length < 100 || coverMessage.trim().length > 800) {
-      setError("Wiadomość musi mieć 100–800 znaków.");
+      setError("Your message must be between 100 and 800 characters.");
       return;
     }
     if (!confirmed) {
-      setError("Potwierdź zapoznanie z briefem.");
+      setError("Please confirm you have read the brief.");
       return;
     }
     setLoading(true);
@@ -60,7 +60,7 @@ export default function ApplyFormClient({
         dimensions?: MatchDimensions | null;
       };
       if (!res.ok) {
-        setError(data.error || "Nie udało się wysłać aplikacji.");
+        setError(data.error || "Could not submit your application.");
         return;
       }
       if (
@@ -78,7 +78,7 @@ export default function ApplyFormClient({
         });
       }
     } catch {
-      setError("Błąd sieci.");
+      setError("Network error.");
     } finally {
       setLoading(false);
     }
@@ -88,11 +88,11 @@ export default function ApplyFormClient({
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
         <p className="text-base font-medium text-gray-900">
-          Aplikacja wysłana! Firma zostanie powiadomiona.
+          Application sent. The company will be notified.
         </p>
         <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 space-y-2">
           <p className="text-sm">
-            <span className="text-gray-600">Wynik dopasowania: </span>
+            <span className="text-gray-600">Match score: </span>
             <span className="font-semibold text-indigo-700">{success.matchScore}/100</span>
           </p>
           <p className="text-sm text-gray-800 leading-relaxed">{success.matchExplanation}</p>
@@ -112,7 +112,7 @@ export default function ApplyFormClient({
         ) : null}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div>
-            <p className="font-medium text-emerald-800 mb-1">Mocne strony</p>
+            <p className="font-medium text-emerald-800 mb-1">Strengths</p>
             <ul className="list-disc list-inside text-gray-700 space-y-0.5">
               {success.strengths.map((s, i) => (
                 <li key={i}>{s}</li>
@@ -120,7 +120,7 @@ export default function ApplyFormClient({
             </ul>
           </div>
           <div>
-            <p className="font-medium text-amber-800 mb-1">Ryzyka / luki</p>
+            <p className="font-medium text-amber-800 mb-1">Risks / gaps</p>
             <ul className="list-disc list-inside text-gray-700 space-y-0.5">
               {success.risks.map((s, i) => (
                 <li key={i}>{s}</li>
@@ -132,7 +132,7 @@ export default function ApplyFormClient({
           href="/briefs"
           className="inline-block text-sm font-medium text-indigo-600 hover:text-indigo-800"
         >
-          Wróć do listy briefów
+          Back to brief list
         </Link>
       </div>
     );
@@ -146,7 +146,7 @@ export default function ApplyFormClient({
       onSubmit={onSubmit}
       className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-5"
     >
-      <h2 className="text-lg font-semibold text-gray-900">Twoja aplikacja</h2>
+      <h2 className="text-lg font-semibold text-gray-900">Your application</h2>
 
       {error ? (
         <p className="text-sm text-red-600" role="alert">
@@ -156,10 +156,10 @@ export default function ApplyFormClient({
 
       <div>
         <label htmlFor="cover" className="block text-sm font-medium text-gray-700 mb-1">
-          Twoja wiadomość do firmy <span className="text-red-500">*</span>
+          Your message to the company <span className="text-red-500">*</span>
         </label>
         <p className="text-xs text-gray-500 mb-2">
-          Dlaczego pasujesz do tego projektu? (100–800 znaków)
+          Why are you a strong fit for this project? (100–800 characters)
         </p>
         <textarea
           id="cover"
@@ -169,10 +169,10 @@ export default function ApplyFormClient({
           rows={6}
           value={coverMessage}
           onChange={(e) => setCoverMessage(e.target.value)}
-          placeholder="Opisz konkretnie, jakie twoje kompetencje są przydatne dla tego projektu..."
+          placeholder="Describe how your skills and experience apply to this project in concrete terms..."
           className={inputClass}
         />
-        <p className="text-xs text-gray-500 mt-1">{coverMessage.trim().length} / 800 znaków</p>
+        <p className="text-xs text-gray-500 mt-1">{coverMessage.trim().length} / 800 characters</p>
       </div>
 
       <label className="flex gap-3 items-start cursor-pointer">
@@ -183,7 +183,7 @@ export default function ApplyFormClient({
           className="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-300"
         />
         <span className="text-sm text-gray-700">
-          Potwierdzam, że zapoznałem/am się z briefem i mam czas na ten projekt
+          I confirm that I have read the brief and have capacity for this project
         </span>
       </label>
 
@@ -192,13 +192,13 @@ export default function ApplyFormClient({
         disabled={loading}
         className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
       >
-        {loading ? "Wysyłanie…" : "Aplikuj na projekt"}
+        {loading ? "Submitting…" : "Apply for project"}
       </button>
 
       <p className="text-xs text-gray-500">
-        Nie masz profilu?{" "}
+        No profile yet?{" "}
         <Link href="/researcher/register" className="text-indigo-600 hover:underline">
-          Zarejestruj się
+          Register
         </Link>
       </p>
     </form>

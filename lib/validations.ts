@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const companySchema = z.object({
-  name: z.string().min(1, "Nazwa jest wymagana"),
+  name: z.string().min(1, "Name is required"),
   industry: z.string().optional(),
-  email: z.string().email("Podaj poprawny adres e-mail"),
+  email: z.string().email("Enter a valid email address"),
 });
 export type CompanyInput = z.infer<typeof companySchema>;
 
@@ -56,7 +56,7 @@ const currentYear = new Date().getFullYear();
 
 export const researcherProjectInputSchema = z
   .object({
-    title: z.string().trim().min(1, "Tytuł projektu jest wymagany"),
+    title: z.string().trim().min(1, "Project title is required"),
     description: z.string().trim().max(2000).optional().or(z.literal("")),
     type: z.preprocess(
       (value) => (value === "" ? undefined : value),
@@ -67,7 +67,7 @@ export const researcherProjectInputSchema = z
   })
   .refine(
     (p) => p.year_from == null || p.year_to == null || p.year_to >= p.year_from,
-    { message: "Rok zakończenia musi być po roku rozpoczęcia", path: ["year_to"] }
+    { message: "End year must be after start year", path: ["year_to"] }
   );
 export type ResearcherProjectInput = z.infer<typeof researcherProjectInputSchema>;
 
@@ -82,15 +82,15 @@ export const researcherProjectSchema = z.object({
 export type ResearcherProjectRow = z.infer<typeof researcherProjectSchema>;
 
 export const researcherRegistrationSchema = z.object({
-  first_name: z.string().trim().min(1, "Imię jest wymagane").max(80),
-  last_name: z.string().trim().min(1, "Nazwisko jest wymagane").max(80),
-  email: z.string().trim().toLowerCase().email("Podaj poprawny adres email"),
+  first_name: z.string().trim().min(1, "First name is required").max(80),
+  last_name: z.string().trim().min(1, "Last name is required").max(80),
+  email: z.string().trim().toLowerCase().email("Enter a valid email address"),
   institution: z
     .string()
     .trim()
-    .min(2, "Podaj nazwę uczelni lub instytutu")
+    .min(2, "Enter the university or institute name")
     .max(200),
-  phd_start_year: z.number().int().min(2010, "Najwcześniej rok 2010").max(currentYear, `Najpóźniej rok ${currentYear}`),
+  phd_start_year: z.number().int().min(2010, "Earliest allowed year is 2010").max(currentYear, `Latest allowed year ${currentYear}`),
   stage: researcherStageSchema,
 
   research_domain: researchDomainSchema,
@@ -98,32 +98,32 @@ export const researcherRegistrationSchema = z.object({
   research_description: z
     .string()
     .trim()
-    .min(80, "Opis musi mieć co najmniej 80 znaków")
+    .min(80, "Description must be at least 80 characters")
     .max(4000),
 
   practical_skills: z
     .array(z.string().trim().min(1).max(80))
-    .min(3, "Dodaj co najmniej 3 umiejętności")
-    .max(20, "Maksymalnie 20 umiejętności"),
+    .min(3, "Add at least 3 skills")
+    .max(20, "Maximum 20 skills"),
 
   projects: z
     .array(researcherProjectInputSchema)
-    .min(1, "Dodaj przynajmniej jeden projekt")
-    .max(6, "Maksymalnie 6 projektów"),
+    .min(1, "Add at least one project")
+    .max(6, "Maximum 6 projects"),
 
   availability_hours_per_week: z.number().int().min(4).max(40),
   availability_modes: z
     .array(availabilityModeSchema)
-    .min(1, "Wybierz przynajmniej jedną formę współpracy"),
+    .min(1, "Select at least one collaboration mode"),
 
   motivation: z
     .string()
     .trim()
-    .min(100, "Motywacja musi mieć co najmniej 100 znaków")
-    .max(600, "Maksymalnie 600 znaków"),
+    .min(100, "Motivation must be at least 100 characters")
+    .max(600, "Maximum 600 characters"),
 
   publication_links: z
-    .array(z.string().trim().url("Podaj poprawny URL").or(z.literal("")))
+    .array(z.string().trim().url("Enter a valid URL").or(z.literal("")))
     .max(10)
     .optional()
     .transform((arr) => (arr ?? []).filter((u): u is string => Boolean(u && u.length > 0))),
@@ -160,7 +160,7 @@ export const applicationSchema = z.object({
 });
 export type ApplicationInput = z.infer<typeof applicationSchema>;
 
-/* ——— Briefy R&D (formularz firmy + API) ——— */
+/* --- R&D briefs (company form + API) --- */
 
 export const industryOptions = [
   "Industrial Manufacturing",
@@ -218,24 +218,24 @@ export const rawInputSchema = z.object({
 });
 
 export const publishBriefBodySchema = z.object({
-  companyName: z.string().min(1, "Podaj nazwę firmy."),
-  companyEmail: z.string().email("Podaj poprawny adres e-mail."),
+  companyName: z.string().min(1, "Enter the company name."),
+  companyEmail: z.string().email("Enter a valid email address."),
   rawInput: rawInputSchema,
   finalContent: aiBriefResponseSchema,
 });
 export type PublishBriefBody = z.infer<typeof publishBriefBodySchema>;
 
-/** Treść zgłoszenia badacza (POST /api/applications/submit) */
+/** Researcher application payload (POST /api/applications/submit) */
 export const applicationSubmitSchema = z.object({
   briefId: z.string().uuid(),
   coverMessage: z.string().min(100).max(800),
   confirmed: z
     .boolean()
-    .refine((v) => v === true, { message: "Musisz potwierdzić zapoznanie z briefem." }),
+    .refine((v) => v === true, { message: "You must confirm that you have reviewed the brief." }),
 });
 export type ApplicationSubmitInput = z.infer<typeof applicationSubmitSchema>;
 
-/** Odpowiedź modelu dopasowania (JSON) */
+/** Matching model response (JSON) */
 export const matchDimensionSchema = z.object({
   score: z.number().min(0).max(100),
   rationale: z.string(),
@@ -269,11 +269,11 @@ export const profileBuilderProjectSchema = z.object({
 });
 
 export const profileBuilderInputSchema = z.object({
-  rawText: z.string().trim().min(80, "Wklej co najmniej 80 znaków opisu profilu."),
+  rawText: z.string().trim().min(80, "Paste at least 80 characters of profile description."),
   stage: researcherStageSchema.optional(),
   research_domain: researchDomainSchema.optional(),
   publication_links: z
-    .array(z.string().trim().url("Podaj poprawny URL").or(z.literal("")))
+    .array(z.string().trim().url("Enter a valid URL").or(z.literal("")))
     .max(10)
     .optional()
     .transform((arr) => (arr ?? []).filter((u): u is string => Boolean(u && u.length > 0))),

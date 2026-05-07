@@ -1,5 +1,5 @@
 /**
- * Re-eksporty dla kompatybilności importów. Jedno źródło prawdy: `lib/validations.ts`.
+ * Re-exports for import compatibility. Single source of truth: `lib/validations.ts`.
  */
 export {
   type AiBriefContent,

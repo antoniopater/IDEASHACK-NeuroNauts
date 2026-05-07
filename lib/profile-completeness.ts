@@ -33,21 +33,21 @@ export function calculateProfileCompleteness(
   if (hasBasic) {
     score += 20;
   } else {
-    missing.push("Uzupełnij dane podstawowe (imię, nazwisko, uczelnia, rok, etap)");
+    missing.push("Complete basic information (first name, last name, university, year, stage)");
   }
 
   const desc = (input.research_description ?? "").trim();
   if (desc.length >= 150) {
     score += 15;
   } else {
-    missing.push("Rozszerz opis badań do co najmniej 150 znaków");
+    missing.push("Expand the research description to at least 150 characters");
   }
 
   const skills = (input.practical_skills ?? []).filter((s) => nonEmpty(s));
   if (skills.length >= 3) {
     score += 15;
   } else {
-    missing.push("Dodaj co najmniej 3 umiejętności praktyczne");
+    missing.push("Add at least 3 practical skills");
   }
   if (skills.length >= 6) {
     score += 5;
@@ -59,14 +59,14 @@ export function calculateProfileCompleteness(
   if (projectWithDescription) {
     score += 15;
   } else {
-    missing.push("Opisz co najmniej jeden projekt (co najmniej 20 znaków opisu)");
+    missing.push("Describe at least one project (at least 20 characters in the description)");
   }
 
   const motivation = (input.motivation ?? "").trim();
   if (motivation.length >= 200) {
     score += 15;
   } else {
-    missing.push("Rozszerz motywację do co najmniej 200 znaków");
+    missing.push("Expand motivation to at least 200 characters");
   }
 
   const hasAvailability =
@@ -77,14 +77,14 @@ export function calculateProfileCompleteness(
   if (hasAvailability) {
     score += 10;
   } else {
-    missing.push("Uzupełnij dostępność (godziny i formy współpracy)");
+    missing.push("Complete availability information (hours and collaboration modes)");
   }
 
   const publications = (input.publication_links ?? []).filter((u) => nonEmpty(u));
   if (publications.length >= 1) {
     score += 5;
   } else {
-    missing.push("Dodaj przynajmniej jeden link do publikacji (Google Scholar / ORCID / DOI)");
+    missing.push("Add at least one publication link (Google Scholar / ORCID / DOI)");
   }
 
   return { score: Math.min(100, score), missing };

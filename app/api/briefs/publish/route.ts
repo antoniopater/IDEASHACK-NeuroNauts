@@ -14,23 +14,23 @@ function briefSlugFromUuid(id: string): string {
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ error: "Musisz byc zalogowany jako firma." }, { status: 401 });
+    return NextResponse.json({ error: "You must be signed in as a company." }, { status: 401 });
   }
   if (user.role !== "company") {
-    return NextResponse.json({ error: "To konto nie ma uprawnien firmy." }, { status: 403 });
+    return NextResponse.json({ error: "This account does not have company permissions." }, { status: 403 });
   }
 
   let json: unknown;
   try {
     json = await req.json();
   } catch {
-    return NextResponse.json({ error: "Nieprawidłowe ciało żądania JSON." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
   }
 
   const parsed = publishBriefBodySchema.safeParse(json);
   if (!parsed.success) {
     const msg = parsed.error.issues.map((i) => i.message).join(" ");
-    return NextResponse.json({ error: msg || "Walidacja nie powiodła się." }, { status: 400 });
+    return NextResponse.json({ error: msg || "Validation failed." }, { status: 400 });
   }
 
   const { companyName, rawInput, finalContent } = parsed.data;
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
   if ("error" in result) {
     return NextResponse.json(
-      { error: result.error || "Nie udało się opublikować briefu." },
+      { error: result.error || "Failed to publish brief." },
       { status: 500 }
     );
   }

@@ -39,10 +39,20 @@ function truncate(s: string, n: number): string {
   return `${t.slice(0, n - 1)}…`;
 }
 
-export default function BriefsListingClient({ items }: { items: BriefListItem[] }) {
+export default function BriefsListingClient({
+  items,
+  favoriteBriefIds,
+  canFavorite,
+}: {
+  items: BriefListItem[];
+  favoriteBriefIds: string[];
+  canFavorite: boolean;
+}) {
   const [industrySel, setIndustrySel] = useState<string[]>([]);
   const [timelineFilter, setTimelineFilter] = useState<TimelineFilterId>("all");
   const [budgetFilter, setBudgetFilter] = useState<BudgetFilterId>("all");
+  const [favorites, setFavorites] = useState<Set<string>>(() => new Set(favoriteBriefIds));
+  const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
 
   const filtered = useMemo(() => {
     return items.filter((b) => {
@@ -61,6 +71,41 @@ export default function BriefsListingClient({ items }: { items: BriefListItem[] 
     setIndustrySel([]);
     setTimelineFilter("all");
     setBudgetFilter("all");
+  }
+
+  async function toggleFavorite(briefId: string) {
+    if (!canFavorite) return;
+    if (pendingIds.has(briefId)) return;
+    const wasFavorite = favorites.has(briefId);
+    setPendingIds((prev) => new Set(prev).add(briefId));
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (wasFavorite) next.delete(briefId);
+      else next.add(briefId);
+      return next;
+    });
+    try {
+      const res = await fetch("/api/briefs/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ briefId, favorite: !wasFavorite }),
+      });
+      if (!res.ok) throw new Error("favorite-update-failed");
+    } catch {
+      // Roll back optimistic UI on error.
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        if (wasFavorite) next.add(briefId);
+        else next.delete(briefId);
+        return next;
+      });
+    } finally {
+      setPendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(briefId);
+        return next;
+      });
+    }
   }
 
   return (
@@ -107,6 +152,20 @@ export default function BriefsListingClient({ items }: { items: BriefListItem[] 
                 </div>
                 <p className="text-xs text-gray-500 mb-4">Posted {daysAgoLabel(b.published_at)}</p>
                 <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void toggleFavorite(b.id)}
+                    disabled={!canFavorite || pendingIds.has(b.id)}
+                    title={canFavorite ? "Toggle favorite" : "Sign in to add favorites"}
+                    className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm transition-colors ${
+                      favorites.has(b.id)
+                        ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
+                        : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                    } disabled:opacity-60`}
+                    aria-label={favorites.has(b.id) ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    {favorites.has(b.id) ? "♥" : "♡"}
+                  </button>
                   <Link
                     href={`/researcher/apply/${b.id}`}
                     className="inline-flex items-center justify-center rounded-lg border-2 border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors"

@@ -8,21 +8,21 @@ import { completeChat, llmErrorToUserMessage } from "@/lib/llm-chat";
 import { parseJsonObjectFromText } from "@/lib/parse-ai-json";
 import { hasLlmConfigured, jsonMissingLlmKey } from "@/lib/server-env";
 
-const SYSTEM_PROMPT = `Jesteś ekspertem ds. R&D i transferu technologii. Pomagasz firmom przekształcić ogólny problem biznesowy w precyzyjny brief R&D, który zrozumie doktorant lub młody badacz.
+const SYSTEM_PROMPT = `You are an expert in R&D and technology transfer. You help companies turn a general business problem into a precise R&D brief understandable to a PhD candidate or early-career researcher.
 
-Generujesz brief w języku polskim. Brief musi być:
-- Konkretny i mierzalny (nie "zbadaj temat X", ale "dostarcz analizę Y z rekomendacjami dla Z")
-- Zrozumiały dla badacza bez znajomości firmy
-- Realistyczny dla małego projektu (konsultacja, POC, analiza)
+Generate the brief in English. The brief must be:
+- Specific and measurable (not "explore topic X", but "deliver analysis Y with recommendations for Z")
+- Understandable for a researcher with no prior company context
+- Realistic for a small project (consultation, POC, analysis)
 
-Zwróć TYLKO JSON w tym formacie (bez markdown, bez komentarzy):
+Return ONLY JSON in this format (no markdown, no comments):
 {
-  "cel_rd": "Jeden akapit opisujący cel projektu z perspektywy badawczej",
-  "wymagane_kompetencje": ["kompetencja 1", "kompetencja 2", "kompetencja 3"],
-  "zakres_projektu": "Opis zakresu: co wchodzi w projekt, a co nie",
-  "oczekiwany_rezultat": "Co konkretnie firma otrzyma na końcu",
-  "pierwszy_milestone": "Co powinno być gotowe po pierwszych 2 tygodniach współpracy",
-  "suggested_researcher_profile": "Krótki opis idealnego kandydata (3 zdania)"
+  "cel_rd": "One paragraph describing the project objective from a research perspective",
+  "wymagane_kompetencje": ["competency 1", "competency 2", "competency 3"],
+  "zakres_projektu": "Scope description: what is included in the project and what is out of scope",
+  "oczekiwany_rezultat": "What exactly the company will receive at the end",
+  "pierwszy_milestone": "What should be ready after the first 2 weeks of collaboration",
+  "suggested_researcher_profile": "Brief description of the ideal candidate (3 sentences)"
 }`;
 
 function buildUserPrompt(input: {
@@ -32,11 +32,11 @@ function buildUserPrompt(input: {
   budget: string;
   expected_result: string;
 }) {
-  return `Firma z branży: ${input.industry}
+  return `Company industry: ${input.industry}
 Problem: ${input.problem}
-Horyzont: ${input.timeline}
-Budżet: ${input.budget}
-Oczekiwany rezultat: ${input.expected_result || "—"}`;
+Timeline: ${input.timeline}
+Budget: ${input.budget}
+Expected result: ${input.expected_result || "—"}`;
 }
 
 export async function POST(req: Request) {
@@ -44,13 +44,13 @@ export async function POST(req: Request) {
   try {
     json = await req.json();
   } catch {
-    return NextResponse.json({ error: "Nieprawidłowe ciało żądania JSON." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
   }
 
   const parsed = generateBriefInputSchema.safeParse(json);
   if (!parsed.success) {
     const msg = parsed.error.issues.map((i) => i.message).join(" ");
-    return NextResponse.json({ error: msg || "Walidacja nie powiodła się." }, { status: 400 });
+    return NextResponse.json({ error: msg || "Validation failed." }, { status: 400 });
   }
 
   if (!hasLlmConfigured()) {
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         return NextResponse.json(
           {
             error:
-              "Odpowiedź AI ma nieprawidłowy format JSON. Spróbuj ponownie wygenerować brief.",
+              "The AI response has an invalid JSON format. Please regenerate the brief.",
           },
           { status: 400 }
         );
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Nie udało się sparsować odpowiedzi AI jako JSON. Spróbuj wygenerować brief ponownie.",
+            "Failed to parse the AI response as JSON. Please regenerate the brief.",
         },
         { status: 400 }
       );

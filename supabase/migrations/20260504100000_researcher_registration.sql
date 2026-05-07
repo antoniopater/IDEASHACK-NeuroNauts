@@ -10,7 +10,7 @@ alter table public.researchers
   check (stage in ('doktorant', 'ktor', 'doktor', 'postdoc'));
 
 -- Original limited researcher_projects.type to research/industry/internship/other.
--- The registration form distinguishes "Zlecenie/konsultacja" and "Koło naukowe".
+-- The registration form additionally distinguishes "Consultation" and "Student research circle".
 alter table public.researcher_projects
   drop constraint if exists researcher_projects_type_check;
 

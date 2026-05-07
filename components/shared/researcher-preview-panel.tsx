@@ -47,19 +47,14 @@ export function ResearcherPreviewPanel({
 }) {
   const [researchers, setResearchers] = useState<PreviewResearcher[]>([]);
   const [loading, setLoading] = useState(false);
-  const [triggered, setTriggered] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const readyToMatch = problem.trim().length >= 50;
 
   useEffect(() => {
-    if (problem.trim().length < 50) {
-      setResearchers([]);
-      setTriggered(false);
-      return;
-    }
+    if (!readyToMatch) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(async () => {
       setLoading(true);
-      setTriggered(true);
       try {
         const res = await fetch("/api/researchers/quick-match", {
           method: "POST",
@@ -75,9 +70,9 @@ export function ResearcherPreviewPanel({
       }
     }, 700);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [problem, domain]);
+  }, [problem, domain, readyToMatch]);
 
-  if (!triggered && problem.trim().length < 50) return null;
+  if (!readyToMatch) return null;
 
   return (
     <div className="rounded-xl border border-indigo-100 bg-gradient-to-b from-indigo-50/80 to-white p-4">

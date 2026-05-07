@@ -10,7 +10,7 @@ export function parseJsonObjectFromText(raw: string): unknown {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start === -1 || end === -1 || end <= start) {
-    throw new Error("Brak poprawnego obiektu JSON w odpowiedzi modelu.");
+    throw new Error("No valid JSON object found in the model response.");
   }
   return JSON.parse(text.slice(start, end + 1));
 }

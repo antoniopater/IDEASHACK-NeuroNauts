@@ -32,23 +32,23 @@ function asDimensions(v: unknown): [string, { score: number; rationale: string }
 }
 
 const dimensionLabels: Record<string, string> = {
-  domain_fit: "Dziedzina",
-  skills_fit: "Kompetencje",
-  availability_fit: "Dostępność",
-  motivation_fit: "Motywacja",
+  domain_fit: "Domain",
+  skills_fit: "Skills",
+  availability_fit: "Availability",
+  motivation_fit: "Motivation",
 };
 
 function stageLabel(stage: string): string {
-  if (stage === "doktorant") return "Doktorant";
-  if (stage === "ktor" || stage === "doktor") return "Doktor";
+  if (stage === "doktorant") return "PhD student";
+  if (stage === "ktor" || stage === "doktor") return "PhD";
   if (stage === "postdoc") return "Postdoc";
   return stage;
 }
 
 function formatStatus(status: string): string {
-  if (status === "pending") return "oczekujące";
-  if (status === "shortlisted") return "na shortliście";
-  if (status === "rejected") return "odrzucone";
+  if (status === "pending") return "Pending";
+  if (status === "shortlisted") return "Shortlisted";
+  if (status === "rejected") return "Rejected";
   return status;
 }
 
@@ -93,7 +93,7 @@ export default function ApplicationsManageClient({
       });
       if (!res.ok) {
         const j = (await res.json()) as { error?: string };
-        alert(j.error || "Wystąpił błąd. Spróbuj ponownie.");
+        alert(j.error || "Something went wrong. Please try again.");
         return;
       }
       setApps((prev) =>
@@ -109,9 +109,9 @@ export default function ApplicationsManageClient({
       <div className="flex flex-wrap gap-2">
         {(
           [
-            ["all", "Wszystkie"],
-            ["shortlisted", "Shortlista"],
-            ["pending", "Oczekujące"],
+            ["all", "All"],
+            ["shortlisted", "Shortlist"],
+            ["pending", "Pending"],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -131,7 +131,7 @@ export default function ApplicationsManageClient({
 
       <div className="space-y-4">
         {filtered.length === 0 ? (
-          <p className="text-gray-600 text-sm">Brak aplikacji w tym widoku.</p>
+          <p className="text-gray-600 text-sm">No applications in this view.</p>
         ) : (
           filtered.map((app) => {
             const res = normalizeResearcher(app.researchers);
@@ -152,7 +152,7 @@ export default function ApplicationsManageClient({
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div>
                     <h2 className="text-base font-semibold text-gray-900">
-                      {res ? `${res.first_name} ${res.last_name}` : "Badacz"}
+                      {res ? `${res.first_name} ${res.last_name}` : "Researcher"}
                     </h2>
                     <p className="text-sm text-gray-600 mt-0.5">
                       {res?.institution ?? "—"}
@@ -169,9 +169,9 @@ export default function ApplicationsManageClient({
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={score}
-                    aria-label={`Wynik dopasowania do projektu: ${score} punktów na sto`}
+                    aria-label={`Project match score: ${score} out of 100`}
                   >
-                    <p className="text-xs text-gray-500 mb-1">Dopasowanie</p>
+                    <p className="text-xs text-gray-500 mb-1">Match</p>
                     <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
                       <div
                         className={`h-full rounded-full ${scoreBarColor(score)}`}
@@ -208,7 +208,7 @@ export default function ApplicationsManageClient({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <p className="text-xs font-semibold text-emerald-800 mb-2">Mocne strony</p>
+                    <p className="text-xs font-semibold text-emerald-800 mb-2">Strengths</p>
                     <ul className="space-y-1">
                       {strengths.map((s, i) => (
                         <li key={i} className="flex gap-2 text-sm text-gray-700">
@@ -219,7 +219,7 @@ export default function ApplicationsManageClient({
                     </ul>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-amber-800 mb-2">Ryzyka</p>
+                    <p className="text-xs font-semibold text-amber-800 mb-2">Risks</p>
                     <ul className="space-y-1">
                       {risks.map((s, i) => (
                         <li key={i} className="flex gap-2 text-sm text-gray-700">
@@ -232,13 +232,13 @@ export default function ApplicationsManageClient({
                 </div>
 
                 <p className="text-xs text-gray-500 mt-4">
-                  Dostępność: {hours != null ? `${hours} h/tydz.` : "—"} · tryby: {modes}
+                  Availability: {hours != null ? `${hours} h/week` : "—"} · modes: {modes}
                 </p>
 
                 <details className="mt-4 group border-t border-gray-100 pt-3">
                   <summary className="cursor-pointer text-sm font-medium text-indigo-600 list-none flex items-center gap-2">
                     <span className="select-none group-open:rotate-90 transition-transform">▸</span>
-                    Wiadomość od badacza
+                    Message from researcher
                   </summary>
                   <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap pl-6">
                     {app.cover_message ?? "—"}
@@ -251,7 +251,7 @@ export default function ApplicationsManageClient({
                       href={`/researcher/${res.id}`}
                       className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
                     >
-                      Zobacz pełny profil
+                      View full profile
                     </Link>
                   ) : null}
                   {app.status !== "shortlisted" ? (
@@ -261,7 +261,7 @@ export default function ApplicationsManageClient({
                       onClick={() => setStatus(app.id, "shortlisted")}
                       className="rounded-lg border border-indigo-600 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
                     >
-                      Shortlista
+                      Shortlist
                     </button>
                   ) : null}
                   {app.status !== "rejected" ? (
@@ -271,7 +271,7 @@ export default function ApplicationsManageClient({
                       onClick={() => setStatus(app.id, "rejected")}
                       className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-50"
                     >
-                      Odrzuć
+                      Reject
                     </button>
                   ) : null}
                   <span className="text-xs text-gray-500 self-center ml-auto">

@@ -12,14 +12,14 @@ import { dbLinkUserResearcher } from "@/lib/app-db";
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ error: "Musisz byc zalogowany jako badacz." }, { status: 401 });
+    return NextResponse.json({ error: "You must be signed in as a researcher." }, { status: 401 });
   }
   if (user.role !== "researcher") {
-    return NextResponse.json({ error: "To konto nie ma uprawnien badacza." }, { status: 403 });
+    return NextResponse.json({ error: "This account does not have researcher permissions." }, { status: 403 });
   }
   if (!user.institution_verified) {
     return NextResponse.json(
-      { error: "Konto badacza wymaga potwierdzenia afiliacji uczelnianej." },
+      { error: "Researcher accounts require verified academic affiliation." },
       { status: 403 }
     );
   }
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     json = await req.json();
   } catch {
     return NextResponse.json(
-      { error: "Nieprawidłowe ciało żądania JSON." },
+      { error: "Invalid JSON request body." },
       { status: 400 }
     );
   }
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       (fieldErrors[path] ??= []).push(issue.message);
     }
     return NextResponse.json(
-      { error: "Walidacja nie powiodła się.", fieldErrors },
+      { error: "Validation failed.", fieldErrors },
       { status: 400 }
     );
   }
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
   const data = parsed.data;
   if (data.email.trim().toLowerCase() !== user.email.trim().toLowerCase()) {
     return NextResponse.json(
-      { error: "E-mail w formularzu musi byc zgodny z e-mailem konta." },
+      { error: "The form email must match the account email." },
       { status: 400 }
     );
   }
@@ -78,12 +78,12 @@ export async function POST(req: Request) {
   if ("error" in result) {
     if (result.error.code === "23505") {
       return NextResponse.json(
-        { error: "Profil z tym adresem email już istnieje." },
+        { error: "A profile with this email address already exists." },
         { status: 409 }
       );
     }
     return NextResponse.json(
-      { error: result.error.message || "Nie udało się zapisać profilu badacza." },
+      { error: result.error.message || "Failed to save researcher profile." },
       { status: 500 }
     );
   }

@@ -25,7 +25,7 @@ function openAiTrioOk(): boolean {
   );
 }
 
-/** Który backend jest aktywny (null = brak kluczy). */
+/** Which backend is active (null = no keys). */
 export function resolveLlmBackend(): LlmBackend | null {
   const explicit = process.env.AI_PROVIDER?.trim().toLowerCase();
   if (explicit === "anthropic") {
@@ -37,7 +37,7 @@ export function resolveLlmBackend(): LlmBackend | null {
   if (explicit === "openai_compatible") {
     return openAiTrioOk() ? "openai_compatible" : null;
   }
-  // Auto: najpierw Groq (często darmowy), potem Anthropic (kompatybilność wsteczna), potem OpenAI-compatible.
+  // Auto: Groq first (often free), then Anthropic (backward compatibility), then OpenAI-compatible.
   if (process.env.GROQ_API_KEY?.trim()) return "groq";
   if (process.env.ANTHROPIC_API_KEY?.trim()) return "anthropic";
   if (openAiTrioOk()) return "openai_compatible";
@@ -48,7 +48,7 @@ export function hasLlmConfigured(): boolean {
   return resolveLlmBackend() !== null;
 }
 
-/** Model do generowania briefu. */
+/** Model used for brief generation. */
 export function getBriefModel(): string {
   const b = resolveLlmBackend();
   const override = process.env.LLM_BRIEF_MODEL?.trim();
@@ -58,7 +58,7 @@ export function getBriefModel(): string {
   return process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-20250514";
 }
 
-/** Model do dopasowania przy aplikacji (może być lżejszy). */
+/** Model used for application matching (can be lighter). */
 export function getMatchModel(): string {
   return process.env.LLM_MATCH_MODEL?.trim() || getBriefModel();
 }
@@ -71,7 +71,7 @@ async function anthropicComplete(params: {
   timeoutMs: number;
 }): Promise<string> {
   if (!anthropicClientSingleton) {
-    throw new Error("Brak skonfigurowanego klienta Anthropic.");
+    throw new Error("Anthropic client is not configured.");
   }
   const message = await withTimeout(
     anthropicClientSingleton.messages.create({
@@ -84,7 +84,7 @@ async function anthropicComplete(params: {
   );
   const block = message.content.find((x) => x.type === "text");
   if (!block || block.type !== "text") {
-    throw new Error("Model nie zwrócił treści tekstowej.");
+    throw new Error("Model did not return text content.");
   }
   return block.text;
 }
@@ -127,11 +127,11 @@ async function openAiCompatibleComplete(opts: {
   try {
     data = JSON.parse(rawText) as typeof data;
   } catch {
-    throw new Error("Nieprawidłowa odpowiedź JSON z API modelu.");
+    throw new Error("Invalid JSON response from model API.");
   }
   const content = data.choices?.[0]?.message?.content;
   if (typeof content !== "string" || !content.trim()) {
-    throw new Error("Pusta odpowiedź modelu.");
+    throw new Error("Empty model response.");
   }
   return content;
 }
@@ -139,8 +139,8 @@ async function openAiCompatibleComplete(opts: {
 export type CompleteChatPurpose = "brief" | "match" | "profile" | "ping";
 
 /**
- * Jedna ścieżka dla generowania briefu, dopasowania i healthchecku.
- * Backend wybierany przez AI_PROVIDER / kolejność auto (patrz resolveLlmBackend).
+ * Single path for brief generation, matching, and health checks.
+ * Backend chosen by AI_PROVIDER / auto order (see resolveLlmBackend).
  */
 export async function completeChat(params: {
   system: string;
@@ -210,7 +210,7 @@ export async function completeChat(params: {
         });
       }
       default:
-        throw new Error("Nieobsługiwany backend LLM.");
+        throw new Error("Unsupported LLM backend.");
     }
   };
   for (let attempt = 0; attempt <= retries; attempt += 1) {
@@ -227,29 +227,29 @@ export async function completeChat(params: {
       }
     }
   }
-  throw new Error("Nie udało się uzyskać odpowiedzi modelu.");
+  throw new Error("Failed to obtain model response.");
 }
 
 export function llmErrorToUserMessage(err: unknown, context: "brief" | "match" = "brief"): string {
   if (err instanceof Error && err.message === "LLM_NOT_CONFIGURED") {
-    return "Brak konfiguracji modelu AI. Dodaj GROQ_API_KEY (np. darmowy limit na console.groq.com) lub ANTHROPIC_API_KEY, albo OPENAI_BASE_URL + OPENAI_API_KEY + OPENAI_MODEL.";
+    return "AI model is not configured. Add GROQ_API_KEY (for example, free tier at console.groq.com) or ANTHROPIC_API_KEY, or OPENAI_BASE_URL + OPENAI_API_KEY + OPENAI_MODEL.";
   }
   if (err && typeof err === "object" && "status" in err) {
     const s = (err as { status?: number }).status;
-    if (s === 429) return "Przekroczono limit zapytań do API modelu. Spróbuj za chwilę.";
+    if (s === 429) return "Model API rate limit exceeded. Please try again shortly.";
     if (s === 401 || s === 403) {
       return context === "match"
-        ? "Błąd autoryzacji API modelu — sprawdź klucz (GROQ_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY) w .env.local."
-        : "Błąd autoryzacji API modelu — sprawdź klucz w .env.local.";
+        ? "Model API authorization error - check key (GROQ_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY) in .env.local."
+        : "Model API authorization error - check key in .env.local.";
     }
   }
   if (err instanceof Error && /apiKey|API key|401/i.test(err.message)) {
-    return "Brak lub nieprawidłowy klucz API modelu.";
+    return "Missing or invalid model API key.";
   }
   if (err instanceof Error && /timeout/i.test(err.message)) {
-    return "Model AI nie odpowiedział na czas. Spróbuj ponownie za chwilę.";
+    return "AI model timed out. Please try again shortly.";
   }
-  return "Błąd podczas komunikacji z modelem AI. Spróbuj ponownie później.";
+  return "Error while communicating with the AI model. Please try again later.";
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {

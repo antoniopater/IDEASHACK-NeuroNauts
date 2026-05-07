@@ -16,8 +16,8 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-session";
 
 function matchLlmErrorMessage(err: unknown): string {
-  if (err instanceof Error && err.message.includes("Nieprawidłowy format")) {
-    return "Nie udało się odczytać odpowiedzi dopasowania AI. Spróbuj ponownie.";
+  if (err instanceof Error && err.message.includes("Invalid format")) {
+    return "Failed to parse the AI matching response. Please try again.";
   }
   return llmErrorToUserMessage(err, "match");
 }
@@ -25,14 +25,14 @@ function matchLlmErrorMessage(err: unknown): string {
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ error: "Musisz byc zalogowany jako badacz." }, { status: 401 });
+    return NextResponse.json({ error: "You must be signed in as a researcher." }, { status: 401 });
   }
   if (user.role !== "researcher") {
-    return NextResponse.json({ error: "To konto nie ma uprawnien badacza." }, { status: 403 });
+    return NextResponse.json({ error: "This account does not have researcher permissions." }, { status: 403 });
   }
   if (!user.researcher_id) {
     return NextResponse.json(
-      { error: "Najpierw uzupelnij profil badacza, aby aplikowac na briefy." },
+      { error: "Complete your researcher profile before applying to briefs." },
       { status: 403 }
     );
   }
@@ -41,13 +41,13 @@ export async function POST(req: Request) {
   try {
     json = await req.json();
   } catch {
-    return NextResponse.json({ error: "Nieprawidłowe ciało żądania JSON." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON request body." }, { status: 400 });
   }
 
   const parsed = applicationSubmitSchema.safeParse(json);
   if (!parsed.success) {
     const msg = parsed.error.issues.map((i) => i.message).join(" ");
-    return NextResponse.json({ error: msg || "Walidacja nie powiodła się." }, { status: 400 });
+    return NextResponse.json({ error: msg || "Validation failed." }, { status: 400 });
   }
 
   const { briefId, coverMessage } = parsed.data;
@@ -59,19 +59,19 @@ export async function POST(req: Request) {
   const researcher = await dbGetResearcherProfile(user.researcher_id);
   if (!researcher) {
     return NextResponse.json(
-      { error: "Nie znaleziono profilu. Najpierw zarejestruj się jako badacz." },
+      { error: "Profile not found. Register as a researcher first." },
       { status: 404 }
     );
   }
 
   const brief = await dbGetBriefForSubmit(briefId);
   if (!brief || brief.status !== "published") {
-    return NextResponse.json({ error: "Brief nie istnieje lub nie jest opublikowany." }, { status: 404 });
+    return NextResponse.json({ error: "The brief does not exist or is not published." }, { status: 404 });
   }
 
   const finalParsed = aiBriefResponseSchema.safeParse(brief.final_content);
   if (!finalParsed.success) {
-    return NextResponse.json({ error: "Brief ma nieprawidłową treść." }, { status: 502 });
+    return NextResponse.json({ error: "The brief content is invalid." }, { status: 502 });
   }
   const content = finalParsed.data;
   const raw = (brief.raw_input ?? {}) as { industry?: string; timeline?: string };
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
             return `${p.title}${years}${desc}`;
           })
           .join(" | ")
-      : "Brak zapisanych projektów.";
+      : "No saved projects.";
 
   const skills =
     researcher.practical_skills?.length && researcher.practical_skills.length > 0
@@ -154,10 +154,10 @@ export async function POST(req: Request) {
 
   if ("error" in inserted) {
     if (inserted.error.code === "23505") {
-      return NextResponse.json({ error: "Już złożyłeś aplikację na ten brief." }, { status: 409 });
+      return NextResponse.json({ error: "You have already submitted an application for this brief." }, { status: 409 });
     }
     return NextResponse.json(
-      { error: inserted.message || "Nie udało się zapisać aplikacji." },
+      { error: inserted.message || "Failed to save application." },
       { status: 500 }
     );
   }

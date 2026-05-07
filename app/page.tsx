@@ -14,12 +14,12 @@ function truncate(s: string, n: number) {
 }
 
 const PARTNERS = [
-  { name: "QuantumLeap Robotics", industry: "Robotics & Automation", location: "Wrocław", abbr: "QL" },
-  { name: "BioNova Research", industry: "Pharmaceuticals & Biotech", location: "Kraków", abbr: "BN" },
-  { name: "GreenAxis Energy", industry: "Clean Energy", location: "Gdańsk", abbr: "GA" },
-  { name: "MedVision Labs", industry: "MedTech & AI", location: "Poznań", abbr: "MV" },
-  { name: "DataCore Systems", industry: "Data & AI", location: "Warszawa", abbr: "DC" },
-  { name: "SmartFactory Polska", industry: "Industry 4.0", location: "Łódź", abbr: "SF" },
+  { name: "QuantumLeap Robotics", industry: "Robotics & Automation", location: "Wroclaw", abbr: "QL" },
+  { name: "BioNova Research", industry: "Pharmaceuticals & Biotech", location: "Krakow", abbr: "BN" },
+  { name: "GreenAxis Energy", industry: "Clean Energy", location: "Gdansk", abbr: "GA" },
+  { name: "MedVision Labs", industry: "MedTech & AI", location: "Poznan", abbr: "MV" },
+  { name: "DataCore Systems", industry: "Data & AI", location: "Warsaw", abbr: "DC" },
+  { name: "SmartFactory Poland", industry: "Industry 4.0", location: "Lodz", abbr: "SF" },
 ];
 
 const TESTIMONIALS = [
@@ -97,19 +97,19 @@ export default async function Home() {
           <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400 leading-relaxed">
             Nexdoc connects companies seeking R&D support with top PhD researchers. AI matches profiles, briefs are created in minutes, collaboration starts in days.
           </p>
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-10 inline-flex w-full max-w-xl flex-col rounded-2xl border border-white/15 bg-white/5 p-2 backdrop-blur sm:flex-row">
             <Link
               href="/researcher/register"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/25"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-colors hover:bg-indigo-500 sm:flex-1"
             >
-              I'm a researcher
+              I&apos;m a researcher
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             </Link>
             <Link
               href="/company/new-brief"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors backdrop-blur"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 sm:ml-2 sm:flex-1"
             >
-              I'm looking for expertise
+              I&apos;m looking for expertise
             </Link>
           </div>
         </div>
@@ -121,7 +121,7 @@ export default async function Home() {
           {[
             { value: "500+", label: "registered researchers" },
             { value: "120+", label: "partner companies" },
-            { value: "3.2M zł", label: "in completed projects" },
+            { value: "PLN 3.2M", label: "in completed projects" },
             { value: "94%", label: "collaboration satisfaction" },
           ].map((s) => (
             <div key={s.label}>

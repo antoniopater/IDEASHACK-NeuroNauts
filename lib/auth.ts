@@ -22,12 +22,27 @@ export function hashPassword(password: string): string {
 }
 
 export function verifyPassword(password: string, hash: string): boolean {
-  const [saltB64, digestB64] = hash.split(".");
-  if (!saltB64 || !digestB64) return false;
-  const salt = fromBase64Url(saltB64);
-  const expected = fromBase64Url(digestB64);
-  const actual = scryptSync(password, salt, expected.length);
-  return timingSafeEqual(actual, expected);
+  // Preferred format: base64url(salt).base64url(digest)
+  if (hash.includes(".")) {
+    const [saltB64, digestB64] = hash.split(".");
+    if (!saltB64 || !digestB64) return false;
+    const salt = fromBase64Url(saltB64);
+    const expected = fromBase64Url(digestB64);
+    const actual = scryptSync(password, salt, expected.length);
+    return timingSafeEqual(actual, expected);
+  }
+
+  // Legacy demo format: hex(salt):hex(digest)
+  if (hash.includes(":")) {
+    const [saltHex, digestHex] = hash.split(":");
+    if (!saltHex || !digestHex) return false;
+    const salt = Buffer.from(saltHex, "hex");
+    const expected = Buffer.from(digestHex, "hex");
+    const actual = scryptSync(password, salt, expected.length);
+    return timingSafeEqual(actual, expected);
+  }
+
+  return false;
 }
 
 function signPayload(payload: string): string {

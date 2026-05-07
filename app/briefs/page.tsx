@@ -1,8 +1,9 @@
 import { aiBriefResponseSchema } from "@/lib/brief-schema";
-import { dbListPublishedBriefs } from "@/lib/app-db";
+import { dbListFavoriteBriefIdsForUser, dbListPublishedBriefs } from "@/lib/app-db";
 import BriefsListingClient, { type BriefListItem } from "./briefs-listing-client";
 import { hasSupabasePublicConfig } from "@/lib/server-env";
 import type { Metadata } from "next";
+import { getCurrentUser } from "@/lib/auth-session";
 
 export const metadata: Metadata = {
   title: "R&D Briefs | Nexdoc",
@@ -11,10 +12,12 @@ export const metadata: Metadata = {
 
 export default async function BriefsPage() {
   if (!hasSupabasePublicConfig()) {
-    return <BriefsListingClient items={[]} />;
+    return <BriefsListingClient items={[]} favoriteBriefIds={[]} canFavorite={false} />;
   }
 
   const data = await dbListPublishedBriefs();
+  const user = await getCurrentUser();
+  const favoriteBriefIds = user ? await dbListFavoriteBriefIdsForUser(user.id) : [];
 
   const items: BriefListItem[] = [];
   for (const row of data ?? []) {
@@ -32,5 +35,5 @@ export default async function BriefsPage() {
     });
   }
 
-  return <BriefsListingClient items={items} />;
+  return <BriefsListingClient items={items} favoriteBriefIds={favoriteBriefIds} canFavorite={Boolean(user)} />;
 }

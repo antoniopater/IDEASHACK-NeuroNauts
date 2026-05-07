@@ -248,7 +248,7 @@ export default async function ResearcherProfilePage({ params }: PageProps) {
 
           <section>
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">
-              Dostępność
+              Availability
             </h2>
             <p className="text-gray-700">
               {r.availability_hours_per_week

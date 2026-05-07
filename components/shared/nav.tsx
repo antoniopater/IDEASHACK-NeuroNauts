@@ -46,12 +46,14 @@ export async function Nav() {
                   <Link href="/company/new-brief" className="text-slate-400 hover:text-white transition-colors hidden sm:block">New brief</Link>
                 </>
               ) : null}
-              <Link
-                href="/api/auth/logout"
-                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-slate-300 hover:bg-white/10 transition-colors text-xs font-medium"
-              >
-                Sign out
-              </Link>
+              <form action="/api/auth/logout" method="post">
+                <button
+                  type="submit"
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-slate-300 hover:bg-white/10 transition-colors text-xs font-medium"
+                >
+                  Sign out
+                </button>
+              </form>
             </>
           ) : (
             <>

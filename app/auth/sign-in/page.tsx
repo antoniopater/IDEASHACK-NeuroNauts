@@ -27,7 +27,7 @@ export default function SignInPage() {
         researcher_id?: string | null;
       };
       if (!res.ok) {
-        setError(data.error || "Nie udało się zalogować.");
+        setError(data.error || "Sign-in failed.");
         return;
       }
       if (data.role === "company") {
@@ -39,7 +39,7 @@ export default function SignInPage() {
       }
       router.refresh();
     } catch {
-      setError("Błąd sieci. Spróbuj ponownie.");
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export default function SignInPage() {
           <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-white">
             <span className="text-indigo-400">N</span>exdoc
           </Link>
-          <p className="mt-2 text-slate-400 text-sm">Zaloguj się do swojego konta</p>
+          <p className="mt-2 text-slate-400 text-sm">Sign in to your account</p>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-8 shadow-2xl">
@@ -71,13 +71,13 @@ export default function SignInPage() {
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm"
                 type="email"
                 required
-                placeholder="twoj@email.edu.pl"
+                placeholder="you@university.edu"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-300">Hasło</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-300">Password</label>
               <input
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm"
                 type="password"
@@ -93,12 +93,12 @@ export default function SignInPage() {
               disabled={loading}
               className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors"
             >
-              {loading ? "Logowanie..." : "Zaloguj się"}
+              {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
 
           <div className="mt-6 pt-5 border-t border-white/10">
-            <p className="text-xs text-slate-500 text-center mb-3">Konta demo (hasło: demo1234)</p>
+            <p className="text-xs text-slate-500 text-center mb-3">Demo accounts (password: demo1234)</p>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
@@ -109,10 +109,31 @@ export default function SignInPage() {
               </button>
               <button
                 type="button"
+                onClick={() => { setEmail("m.kowalczyk@uj.edu.pl"); setPassword("demo1234"); }}
+                className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-2 py-1.5 text-indigo-300 hover:bg-indigo-500/20 transition-colors text-left"
+              >
+                🎓 Marta Kowalczyk (UJ)
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEmail("p.wisniewski@pwr.edu.pl"); setPassword("demo1234"); }}
+                className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-2 py-1.5 text-indigo-300 hover:bg-indigo-500/20 transition-colors text-left"
+              >
+                🎓 Piotr Wisniewski (PWr)
+              </button>
+              <button
+                type="button"
                 onClick={() => { setEmail("a.zielinska@amu.edu.pl"); setPassword("demo1234"); }}
                 className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-2 py-1.5 text-indigo-300 hover:bg-indigo-500/20 transition-colors text-left"
               >
-                🎓 Anna Zielińska (AMU)
+                🎓 Anna Zielinska (AMU)
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEmail("t.grabowski@agh.edu.pl"); setPassword("demo1234"); }}
+                className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-2 py-1.5 text-indigo-300 hover:bg-indigo-500/20 transition-colors text-left"
+              >
+                🎓 Tomasz Grabowski (AGH)
               </button>
               <button
                 type="button"
@@ -133,9 +154,9 @@ export default function SignInPage() {
         </div>
 
         <p className="mt-6 text-center text-sm text-slate-500">
-          Nie masz konta?{" "}
+          No account yet?{" "}
           <Link href="/auth/sign-up" className="font-medium text-indigo-400 hover:text-indigo-300">
-            Zarejestruj się
+            Create one
           </Link>
         </p>
       </div>

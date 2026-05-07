@@ -9,10 +9,10 @@ const COMPANIES = [
 
 const RESEARCHERS = [
   { id: "r1", label: "AI &\nML", x: 420, y: 50, color: "#f59e0b" },
-  { id: "r2", label: "Biomed\nInż.", x: 420, y: 145, color: "#10b981" },
-  { id: "r3", label: "Energia\nOdnaw.", x: 420, y: 240, color: "#06b6d4" },
-  { id: "r4", label: "Optym.\nKombin.", x: 420, y: 335, color: "#f59e0b" },
-  { id: "r5", label: "Materiały\nnowe", x: 420, y: 430, color: "#8b5cf6" },
+  { id: "r2", label: "Biomed\nEng.", x: 420, y: 145, color: "#10b981" },
+  { id: "r3", label: "Renew.\nEnergy", x: 420, y: 240, color: "#06b6d4" },
+  { id: "r4", label: "Comb.\nOptim.", x: 420, y: 335, color: "#f59e0b" },
+  { id: "r5", label: "New\nmaterials", x: 420, y: 430, color: "#8b5cf6" },
 ];
 
 const EDGES = [
@@ -36,7 +36,7 @@ export function ConnectionGraph() {
     <svg
       viewBox="0 0 500 480"
       className="w-full max-w-2xl mx-auto"
-      aria-label="Graf połączeń firm z badaczami"
+      aria-label="Graph of connections between companies and researchers"
     >
       <defs>
         {EDGES.map((e, i) => (
@@ -44,8 +44,8 @@ export function ConnectionGraph() {
             x1={getPos(e.from).x} y1={getPos(e.from).y}
             x2={getPos(e.to).x} y2={getPos(e.to).y}
           >
-            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.3" />
+            <stop offset="0%" stopColor="#7c8cff" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.22" />
           </linearGradient>
         ))}
       </defs>
@@ -59,9 +59,9 @@ export function ConnectionGraph() {
             key={i}
             d={`M ${from.x} ${from.y} C ${mx} ${from.y}, ${mx} ${to.y}, ${to.x} ${to.y}`}
             stroke={`url(#eg${i})`}
-            strokeWidth="1.5"
+            strokeWidth="1.8"
             fill="none"
-            opacity="0.7"
+            opacity="0.75"
           />
         );
       })}
@@ -71,12 +71,12 @@ export function ConnectionGraph() {
           <rect
             x={c.x - 36} y={c.y - 28}
             width={72} height={56}
-            rx={10}
+            rx={12}
             fill={c.color}
-            fillOpacity="0.15"
+            fillOpacity="0.12"
             stroke={c.color}
             strokeWidth="1.5"
-            strokeOpacity="0.6"
+            strokeOpacity="0.75"
           />
           {c.label.split("\n").map((line, li) => (
             <text
@@ -87,7 +87,7 @@ export function ConnectionGraph() {
               dominantBaseline="middle"
               fontSize="8.5"
               fontWeight="600"
-              fill={c.color}
+              fill="#c7d2fe"
               fontFamily="system-ui, sans-serif"
             >
               {line}
@@ -96,12 +96,12 @@ export function ConnectionGraph() {
         </g>
       ))}
 
-      <text x={80} y={16} textAnchor="middle" fontSize="9" fontWeight="700" fill="#64748b" fontFamily="system-ui">FIRMY</text>
-      <text x={420} y={16} textAnchor="middle" fontSize="9" fontWeight="700" fill="#64748b" fontFamily="system-ui">BADACZE</text>
+      <text x={80} y={16} textAnchor="middle" fontSize="9" fontWeight="700" fill="#94a3b8" fontFamily="system-ui">COMPANIES</text>
+      <text x={420} y={16} textAnchor="middle" fontSize="9" fontWeight="700" fill="#94a3b8" fontFamily="system-ui">RESEARCHERS</text>
 
       {RESEARCHERS.map((r) => (
         <g key={r.id}>
-          <circle cx={r.x} cy={r.y} r={34} fill={r.color} fillOpacity="0.12" stroke={r.color} strokeWidth="1.5" strokeOpacity="0.6" />
+          <circle cx={r.x} cy={r.y} r={34} fill={r.color} fillOpacity="0.1" stroke={r.color} strokeWidth="1.6" strokeOpacity="0.75" />
           {r.label.split("\n").map((line, li) => (
             <text
               key={li}
@@ -111,7 +111,7 @@ export function ConnectionGraph() {
               dominantBaseline="middle"
               fontSize="8.5"
               fontWeight="600"
-              fill={r.color}
+              fill="#bae6fd"
               fontFamily="system-ui, sans-serif"
             >
               {line}
