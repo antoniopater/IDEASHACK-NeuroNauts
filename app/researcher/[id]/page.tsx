@@ -41,10 +41,11 @@ type ProjectRow = {
   year_to: number | null;
 };
 
-type PageProps = { params: { id: string } };
+type PageProps = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const data = await dbGetResearcherProfile(params.id);
+  const { id } = await params;
+  const data = await dbGetResearcherProfile(id);
   if (!data) return { title: "Profil badacza | RD Bridge" };
   return {
     title: `${data.first_name} ${data.last_name} — ${data.institution} | RD Bridge`,
@@ -53,7 +54,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ResearcherProfilePage({ params }: PageProps) {
-  const researcher = await dbGetResearcherProfile(params.id);
+  const { id } = await params;
+  const researcher = await dbGetResearcherProfile(id);
 
   if (!researcher) {
     notFound();

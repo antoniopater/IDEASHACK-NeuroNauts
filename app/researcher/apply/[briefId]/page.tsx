@@ -11,16 +11,18 @@ type Raw = { industry?: string; timeline?: string; budget?: string };
 export async function generateMetadata({
   params,
 }: {
-  params: { briefId: string };
+  params: Promise<{ briefId: string }>;
 }): Promise<Metadata> {
-  const data = await dbGetPublicBrief(params.briefId);
+  const { briefId } = await params;
+  const data = await dbGetPublicBrief(briefId);
   const parsed = data?.final_content ? aiBriefResponseSchema.safeParse(data.final_content) : null;
   const title = parsed?.success ? deriveBriefTitle(parsed.data.cel_rd) : "Aplikacja";
   return { title: `Aplikuj: ${title} | RD Bridge` };
 }
 
-export default async function ApplyPage({ params }: { params: { briefId: string } }) {
-  const data = await dbGetPublicBrief(params.briefId);
+export default async function ApplyPage({ params }: { params: Promise<{ briefId: string }> }) {
+  const { briefId } = await params;
+  const data = await dbGetPublicBrief(briefId);
 
   if (!data) notFound();
 
@@ -40,7 +42,7 @@ export default async function ApplyPage({ params }: { params: { briefId: string 
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <Link
-          href={`/briefs/${params.briefId}`}
+          href={`/briefs/${briefId}`}
           className="text-sm text-indigo-600 hover:text-indigo-800 mb-6 inline-block"
         >
           ← Pełny brief
@@ -111,7 +113,7 @@ export default async function ApplyPage({ params }: { params: { briefId: string 
           </div>
 
           <aside className="w-full lg:w-[380px] shrink-0 lg:sticky lg:top-6">
-            <ApplyFormClient briefId={params.briefId} />
+            <ApplyFormClient briefId={briefId} />
           </aside>
         </div>
       </div>

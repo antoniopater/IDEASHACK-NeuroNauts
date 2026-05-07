@@ -18,10 +18,11 @@ type RawInputShape = {
   budget?: string;
 };
 
-type PageProps = { params: { id: string } };
+type PageProps = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const finalContent = await dbGetBriefFinalContent(params.id);
+  const { id } = await params;
+  const finalContent = await dbGetBriefFinalContent(id);
 
   const parsed = finalContent ? aiBriefResponseSchema.safeParse(finalContent) : null;
   const title = parsed?.success ? deriveBriefTitle(parsed.data.cel_rd) : "Brief R&D";
@@ -32,7 +33,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function PublicBriefPage({ params }: PageProps) {
-  const data = await dbGetPublicBrief(params.id);
+  const { id } = await params;
+  const data = await dbGetPublicBrief(id);
 
   if (!data) {
     notFound();

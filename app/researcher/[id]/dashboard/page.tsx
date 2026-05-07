@@ -11,7 +11,7 @@ import { classifyResearcher } from "@/lib/researcher-classification";
 import { recommendBriefsForResearcher } from "@/lib/researcher-recommendations";
 import { aiBriefResponseSchema } from "@/lib/validations";
 
-type PageProps = { params: { id: string } };
+type PageProps = { params: Promise<{ id: string }> };
 
 const statusLabel: Record<string, string> = {
   pending: "Oczekuje",
@@ -20,7 +20,8 @@ const statusLabel: Record<string, string> = {
 };
 
 export default async function ResearcherDashboardPage({ params }: PageProps) {
-  const researcher = await dbGetResearcherProfile(params.id);
+  const { id } = await params;
+  const researcher = await dbGetResearcherProfile(id);
   if (!researcher) notFound();
 
   const [projects, briefs, applications] = await Promise.all([

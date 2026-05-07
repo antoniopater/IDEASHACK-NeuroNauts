@@ -13,10 +13,11 @@ export default async function CompanyBriefApplicationsPage({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: { token?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ token?: string }>;
 }) {
-  const token = searchParams.token;
+  const { id } = await params;
+  const { token } = await searchParams;
   if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
@@ -35,7 +36,7 @@ export default async function CompanyBriefApplicationsPage({
     );
   }
 
-  const brief = await dbGetBriefForCompany(params.id);
+  const brief = await dbGetBriefForCompany(id);
 
   if (!brief || !brief.company_access_token || brief.company_access_token !== token) {
     return (
@@ -50,7 +51,7 @@ export default async function CompanyBriefApplicationsPage({
   const fc = aiBriefResponseSchema.safeParse(brief.final_content);
   const briefTitle = fc.success ? deriveBriefTitle(fc.data.cel_rd) : "Brief";
 
-  const rawApps = await dbListApplicationsForBrief(params.id);
+  const rawApps = await dbListApplicationsForBrief(id);
 
   if (rawApps === null) {
     return (
@@ -69,7 +70,7 @@ export default async function CompanyBriefApplicationsPage({
           <h1 className="text-2xl font-semibold text-gray-900">Aplikacje na brief</h1>
           <p className="text-sm text-gray-600 mt-1">{briefTitle}</p>
         </header>
-        <ApplicationsManageClient briefId={params.id} token={token} applications={applications} />
+        <ApplicationsManageClient briefId={id} token={token} applications={applications} />
       </div>
     </div>
   );
