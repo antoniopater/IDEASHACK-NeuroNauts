@@ -36,7 +36,7 @@ export async function Nav() {
                     href={`/researcher/${user.researcher_id}`}
                     className="text-slate-400 hover:text-white transition-colors hidden sm:block"
                   >
-                    Mój profil
+                    My profile
                   </Link>
                 </>
               ) : null}
@@ -45,7 +45,7 @@ export async function Nav() {
                   href="/company/new-brief"
                   className="text-slate-400 hover:text-white transition-colors"
                 >
-                  Panel firmy
+                  Company panel
                 </Link>
               ) : null}
               <Link
