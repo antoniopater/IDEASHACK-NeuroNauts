@@ -2,6 +2,10 @@ import { aiBriefResponseSchema, applicationSubmitSchema } from "@/lib/brief-sche
 import { dbGetBriefForSubmit, dbGetResearcherProfile, dbGetResearcherProjectsForSubmit, dbInsertApplication } from "@/lib/app-db";
 import { completeChat, llmErrorToUserMessage } from "@/lib/llm-chat";
 import {
+  blendApplicationMatchScores,
+  computePairSemanticScore,
+} from "@/lib/embeddings";
+import {
   MATCH_SYSTEM_PROMPT,
   buildMatchUserPrompt,
   parseMatchResponse,
@@ -14,6 +18,11 @@ import {
 } from "@/lib/server-env";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-session";
+import {
+  buildBriefEmbeddingText,
+  buildProjectsSummaryLines,
+  buildResearcherEmbeddingText,
+} from "@/lib/match-text";
 
 function matchLlmErrorMessage(err: unknown): string {
   if (err instanceof Error && err.message.includes("Nieprawidłowy format")) {
@@ -74,23 +83,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Brief ma nieprawidłową treść." }, { status: 502 });
   }
   const content = finalParsed.data;
-  const raw = (brief.raw_input ?? {}) as { industry?: string; timeline?: string };
+  const raw = (brief.raw_input ?? {}) as {
+    industry?: string;
+    timeline?: string;
+    budget?: string;
+  };
 
   const projects = await dbGetResearcherProjectsForSubmit(user.researcher_id);
 
-  const projects_summary =
-    projects && projects.length > 0
-      ? projects
-          .map((p) => {
-            const years =
-              p.year_from || p.year_to
-                ? ` (${[p.year_from, p.year_to].filter(Boolean).join("–")})`
-                : "";
-            const desc = p.description ? `: ${p.description}` : "";
-            return `${p.title}${years}${desc}`;
-          })
-          .join(" | ")
-      : "Brak zapisanych projektów.";
+  const projects_summary = buildProjectsSummaryLines(projects);
 
   const skills =
     researcher.practical_skills?.length && researcher.practical_skills.length > 0
@@ -141,12 +142,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status });
   }
 
+  let matchScore = match.score;
+  let matchExplanation = match.explanation;
+  const semanticScore = await computePairSemanticScore(
+    buildResearcherEmbeddingText(
+      {
+        stage: researcher.stage,
+        motivation: researcher.motivation,
+        research_domain: researcher.research_domain,
+        research_subdomain: researcher.research_subdomain,
+        research_description: researcher.research_description,
+        practical_skills: researcher.practical_skills,
+        availability_hours_per_week: researcher.availability_hours_per_week,
+        availability_modes: researcher.availability_modes,
+      },
+      projects_summary
+    ),
+    buildBriefEmbeddingText(content, {
+      industry: raw.industry,
+      timeline: raw.timeline,
+      budget: raw.budget,
+    })
+  );
+  if (semanticScore != null) {
+    matchScore = blendApplicationMatchScores(match.score, semanticScore);
+    matchExplanation = `${match.explanation.trim()} Dopasowanie semantyczne (embedding): ${semanticScore}/100 — łączone z oceną modelu językowego.`;
+  }
+
   const inserted = await dbInsertApplication({
     briefId,
     researcherId: researcher.id,
     coverMessage: coverMessage.trim(),
-    match_score: match.score,
-    match_explanation: match.explanation,
+    match_score: matchScore,
+    match_explanation: matchExplanation,
     match_strengths: match.strengths,
     match_risks: match.risks,
     match_dimensions: match.dimensions ?? null,
@@ -164,8 +192,8 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     applicationId: inserted.id,
-    matchScore: match.score,
-    matchExplanation: match.explanation,
+    matchScore,
+    matchExplanation: matchExplanation,
     strengths: match.strengths,
     risks: match.risks,
     dimensions: match.dimensions ?? null,

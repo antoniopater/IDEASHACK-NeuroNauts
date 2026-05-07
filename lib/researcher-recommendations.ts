@@ -1,4 +1,15 @@
-import { aiBriefResponseSchema } from "@/lib/validations";
+import {
+  blendRankingScores,
+  cosineSimilarity,
+  embedTexts,
+  GroqEmbeddingsUnavailableError,
+  hasEmbeddingsConfigured,
+  logEmbeddingFailure,
+  resolveEmbeddingsEndpoint,
+  semanticScoreFromCosine,
+} from "@/lib/embeddings";
+import { buildBriefEmbeddingText, buildResearcherEmbeddingText } from "@/lib/match-text";
+import { aiBriefResponseSchema, type AiBriefContent } from "@/lib/validations";
 
 export type RecommendationResearcher = {
   research_domain?: string | null;
@@ -7,6 +18,12 @@ export type RecommendationResearcher = {
   practical_skills?: string[] | null;
   availability_hours_per_week?: number | null;
   availability_modes?: string[] | null;
+};
+
+/** Extra researcher profile fields used for embeddings and stronger ranking. */
+export type ResearcherMatchingInput = RecommendationResearcher & {
+  stage?: string | null;
+  motivation?: string | null;
 };
 
 export type RecommendationBrief = {
@@ -26,15 +43,25 @@ export type BriefRecommendation = {
   reasons: string[];
   gaps: string[];
   published_at: string | null;
+  /** Rule-based score before blending with embeddings. */
+  heuristicScore: number;
+  /** Purely semantic score (0–100) after embeddings succeed. */
+  semanticScore?: number;
 };
 
 const domainIndustryHints: Record<string, string[]> = {
-  "Informatyka i AI": ["IT", "oprogramowanie", "Fintech", "Transport"],
-  "Chemia i materiałoznawstwo": ["Chemia", "materiały", "Farmaceutyka"],
-  "Nauki przyrodnicze": ["Farmaceutyka", "biotech", "Rolnictwo", "żywność"],
-  "Nauki medyczne i zdrowie": ["Medycyna", "health", "Farmaceutyka"],
-  "Inżynieria i technologia": ["Produkcja", "Energetyka", "Transport", "IT"],
+  "Informatyka i AI": ["IT", "oprogramowanie", "software", "programming", "Fintech", "Transport"],
+  "Chemia i materiałoznawstwo": ["Chemia", "chemistry", "materiały", "materials", "Farmaceutyka", "pharma", "pharmaceutical"],
+  "Nauki przyrodnicze": ["Farmaceutyka", "pharma", "biotech", "Rolnictwo", "agriculture", "żywność", "food"],
+  "Nauki medyczne i zdrowie": ["Medycyna", "medicine", "health", "Farmaceutyka", "pharma"],
+  "Inżynieria i technologia": ["Produkcja", "production", "Energetyka", "energy", "Transport", "IT"],
 };
+
+type BriefRawShape = { industry?: string; timeline?: string; budget?: string };
+
+function readBriefRaw(raw_input: unknown): BriefRawShape {
+  return (raw_input ?? {}) as BriefRawShape;
+}
 
 export function recommendBriefsForResearcher(
   researcher: RecommendationResearcher,
@@ -48,19 +75,196 @@ export function recommendBriefsForResearcher(
     .slice(0, limit);
 }
 
+/**
+ * Rank briefs using cosine similarity embeddings plus legacy heuristics.
+ * Falls back to heuristics when the API key is missing or embeddings fail.
+ * Embeddings are computed for the top K briefs by heuristic (rest stay heuristic-only to save quota).
+ */
+export async function recommendBriefsForResearcherAsync(
+  researcher: ResearcherMatchingInput,
+  briefs: RecommendationBrief[],
+  options?: { limit?: number; projectsSummary?: string | null }
+): Promise<BriefRecommendation[]> {
+  const limit = options?.limit ?? 5;
+  const prepared: {
+    brief: RecommendationBrief;
+    parsed: AiBriefContent;
+    raw: BriefRawShape;
+    heuristic: BriefRecommendation;
+  }[] = [];
+
+  for (const brief of briefs) {
+    const content = aiBriefResponseSchema.safeParse(brief.final_content);
+    if (!content.success) continue;
+    const raw = readBriefRaw(brief.raw_input);
+    const h = scoreRecommendationHeuristic(researcher, brief, content.data, raw);
+    if (h) prepared.push({ brief, parsed: content.data, raw, heuristic: h });
+  }
+
+  if (prepared.length === 0) return [];
+
+  let topPicks: BriefRecommendation[];
+
+  if (!hasEmbeddingsConfigured()) {
+    topPicks = prepared
+      .map((p) => p.heuristic)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+    return topPicks;
+  }
+
+  const poolSizeRaw = Number(process.env.MATCH_SEMANTIC_POOL_SIZE?.trim() || "48");
+  const poolSize = Number.isFinite(poolSizeRaw)
+    ? Math.max(limit, Math.min(200, Math.floor(poolSizeRaw)))
+    : 48;
+
+  const byHeuristicDesc = [...prepared].sort((a, b) => b.heuristic.score - a.heuristic.score);
+  const semanticPool = byHeuristicDesc.slice(0, poolSize);
+  const tail = byHeuristicDesc.slice(poolSize);
+
+  try {
+    const researcherText = buildResearcherEmbeddingText(researcher, options?.projectsSummary);
+    const briefTexts = semanticPool.map((p) => buildBriefEmbeddingText(p.parsed, p.raw));
+    const vectors = await embedTexts([researcherText, ...briefTexts]);
+    const researcherVec = vectors[0];
+    if (!researcherVec || vectors.length !== briefTexts.length + 1) {
+      throw new Error("Incomplete embeddings response.");
+    }
+
+    const blended = semanticPool.map((p, idx) => {
+      const cosine = cosineSimilarity(researcherVec, vectors[idx + 1]!);
+      const sem = semanticScoreFromCosine(cosine);
+      const base = p.heuristic;
+      const score = blendRankingScores(base.heuristicScore, sem);
+      const reasons = [...base.reasons];
+      const gaps = [...base.gaps];
+      applySemanticBullets(reasons, gaps, sem);
+      return {
+        ...base,
+        score: Math.min(100, score),
+        semanticScore: sem,
+        reasons,
+        gaps,
+      } satisfies BriefRecommendation;
+    });
+
+    const tailRecs = tail.map((p) => ({ ...p.heuristic }));
+    const merged = [...blended, ...tailRecs].sort((a, b) => b.score - a.score);
+    topPicks = merged.slice(0, limit);
+  } catch (e) {
+    if (!(e instanceof GroqEmbeddingsUnavailableError)) {
+      logEmbeddingFailure("recommendBriefsForResearcher.asyncPool", e, resolveEmbeddingsEndpoint());
+    }
+    topPicks = prepared
+      .map((p) => p.heuristic)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+  }
+
+  return await ensureSemanticsOnTopPicks(topPicks, researcher, briefs, options?.projectsSummary);
+}
+
+function applySemanticBullets(reasons: string[], gaps: string[], sem: number): void {
+  if (sem >= 72) {
+    reasons.unshift(`strong semantic match between your profile and the brief text (${sem}/100)`);
+  } else if (sem >= 52) {
+    reasons.push(`good semantic overlap between descriptions (${sem}/100)`);
+  } else if (sem < 38) {
+    gaps.push(
+      "low semantic match — verify the brief aligns with your expertise before applying"
+    );
+  }
+}
+
+/** Fills semanticScore for top-ranked rows missed by the large pool batch. */
+async function ensureSemanticsOnTopPicks(
+  topPicks: BriefRecommendation[],
+  researcher: ResearcherMatchingInput,
+  briefs: RecommendationBrief[],
+  projectsSummary?: string | null
+): Promise<BriefRecommendation[]> {
+  if (!hasEmbeddingsConfigured()) return topPicks;
+
+  const missing = topPicks.filter((r) => r.semanticScore == null);
+  if (missing.length === 0) return topPicks;
+
+  try {
+    const researcherText = buildResearcherEmbeddingText(researcher, projectsSummary);
+    const payloads: { recIndex: number; text: string }[] = [];
+
+    for (let i = 0; i < topPicks.length; i++) {
+      const rec = topPicks[i]!;
+      if (rec.semanticScore != null) continue;
+      const brief = briefs.find((b) => b.id === rec.briefId);
+      if (!brief) continue;
+      const parsed = aiBriefResponseSchema.safeParse(brief.final_content);
+      if (!parsed.success) continue;
+      const raw = readBriefRaw(brief.raw_input);
+      payloads.push({
+        recIndex: i,
+        text: buildBriefEmbeddingText(parsed.data, raw),
+      });
+    }
+
+    if (payloads.length === 0) {
+      logEmbeddingFailure(
+        "ensureSemanticsOnTopPicks",
+        new Error(
+          "Could not map top recommendations to parsed brief content (missing id or parse failure) — semantic pass skipped."
+        )
+      );
+      return topPicks;
+    }
+
+    const vectors = await embedTexts([researcherText, ...payloads.map((p) => p.text)]);
+    const ref = vectors[0];
+    if (!ref) return topPicks;
+
+    for (let j = 0; j < payloads.length; j++) {
+      const { recIndex } = payloads[j]!;
+      const vec = vectors[j + 1];
+      if (!vec) continue;
+      const rec = topPicks[recIndex]!;
+      const sem = semanticScoreFromCosine(cosineSimilarity(ref, vec));
+      const hr = rec.heuristicScore;
+      rec.semanticScore = sem;
+      rec.score = Math.min(100, blendRankingScores(hr, sem));
+      const reasons = [...rec.reasons];
+      const gaps = [...rec.gaps];
+      applySemanticBullets(reasons, gaps, sem);
+      rec.reasons = reasons;
+      rec.gaps = gaps;
+    }
+
+    return [...topPicks].sort((a, b) => b.score - a.score);
+  } catch (e) {
+    if (!(e instanceof GroqEmbeddingsUnavailableError)) {
+      logEmbeddingFailure("ensureSemanticsOnTopPicks", e, resolveEmbeddingsEndpoint());
+    }
+    return topPicks;
+  }
+}
+
 function scoreBrief(
   researcher: RecommendationResearcher,
   brief: RecommendationBrief
 ): BriefRecommendation | null {
   const content = aiBriefResponseSchema.safeParse(brief.final_content);
   if (!content.success) return null;
+  return scoreRecommendationHeuristic(researcher, brief, content.data, readBriefRaw(brief.raw_input));
+}
 
-  const raw = (brief.raw_input ?? {}) as { industry?: string; timeline?: string };
+function scoreRecommendationHeuristic(
+  researcher: RecommendationResearcher,
+  brief: RecommendationBrief,
+  parsed: AiBriefContent,
+  raw: BriefRawShape
+): BriefRecommendation | null {
   const haystack = [
-    content.data.cel_rd,
-    content.data.zakres_projektu,
-    content.data.suggested_researcher_profile,
-    content.data.wymagane_kompetencje.join(" "),
+    parsed.cel_rd,
+    parsed.zakres_projektu,
+    parsed.suggested_researcher_profile,
+    parsed.wymagane_kompetencje.join(" "),
   ]
     .join(" ")
     .toLowerCase();
@@ -76,55 +280,63 @@ function scoreBrief(
 
   if (domain && industryMatchesDomain(domain, industry)) {
     score += 20;
-    reasons.push(`dziedzina profilu pasuje do branży: ${industry}`);
+    reasons.push(`profile domain aligns with brief industry: ${industry}`);
   }
 
   if (subdomain && tokenOverlap(subdomain, haystack)) {
     score += 15;
-    reasons.push("subdyscyplina pojawia się w opisie briefu");
+    reasons.push("subdiscipline keywords appear in the brief");
   }
 
   if (matchedSkills.length > 0) {
     score += Math.min(30, matchedSkills.length * 10);
-    reasons.push(`pasujące umiejętności: ${matchedSkills.slice(0, 3).join(", ")}`);
+    reasons.push(`skills that match this brief: ${matchedSkills.slice(0, 3).join(", ")}`);
   } else {
-    gaps.push("brak oczywistego overlapu z zapisanymi umiejętnościami");
+    gaps.push("little obvious overlap with your listed skills yet");
   }
 
   const hours = researcher.availability_hours_per_week ?? 0;
   if (hours >= 12) {
     score += 10;
-    reasons.push("dostępność pozwala na mały projekt R&D lub POC");
+    reasons.push("availability suits a smaller R&D or PoC engagement");
   } else if (hours > 0) {
     score += 5;
-    reasons.push("dostępność wystarczy na konsultację lub przegląd");
+    reasons.push("availability may fit a consultancy or scoped review");
   } else {
-    gaps.push("brak uzupełnionej dostępności");
+    gaps.push("availability not filled in on your profile");
   }
 
-  if ((researcher.availability_modes ?? []).includes("literature_review") && /literatur|raport/i.test(haystack)) {
+  if (
+    (researcher.availability_modes ?? []).includes("literature_review") &&
+    /literatur|raport|literature|review/i.test(haystack)
+  ) {
     score += 10;
-    reasons.push("brief wygląda na dobry dla przeglądu literatury/ekspertyzy");
+    reasons.push("brief looks suited to a literature survey or advisory review");
   }
-  if ((researcher.availability_modes ?? []).includes("proof_of_concept") && /poc|proof|prototyp|implement/i.test(haystack)) {
+  if (
+    (researcher.availability_modes ?? []).includes("proof_of_concept") &&
+    /poc|proof|prototyp|implement|prototype/i.test(haystack)
+  ) {
     score += 10;
-    reasons.push("brief sugeruje proof-of-concept lub prototyp");
+    reasons.push("brief hints at proof-of-concept or prototype work");
   }
 
   if (reasons.length === 0) {
-    reasons.push("projekt może być wart sprawdzenia po uzupełnieniu profilu");
+    reasons.push("worth a look after you sharpen your researcher profile");
   }
   if (gaps.length === 0) {
-    gaps.push("do potwierdzenia szczegóły zakresu i terminu z firmą");
+    gaps.push("confirm scope and timeline with the company");
   }
 
+  const s = Math.min(100, score);
   return {
     briefId: brief.id,
-    score: Math.min(100, score),
+    score: s,
+    heuristicScore: s,
     industry,
     timeline: raw.timeline ?? "—",
-    cel_rd: content.data.cel_rd,
-    requiredSkills: content.data.wymagane_kompetencje,
+    cel_rd: parsed.cel_rd,
+    requiredSkills: parsed.wymagane_kompetencje,
     reasons,
     gaps,
     published_at: brief.published_at,

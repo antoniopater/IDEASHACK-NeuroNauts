@@ -7,8 +7,10 @@ import {
   dbListResearcherProjectsProfile,
 } from "@/lib/app-db";
 import { deriveBriefTitle } from "@/lib/brief-utils";
+import { hasEmbeddingsConfigured } from "@/lib/embeddings";
+import { buildProjectsSummaryLines } from "@/lib/match-text";
 import { classifyResearcher } from "@/lib/researcher-classification";
-import { recommendBriefsForResearcher } from "@/lib/researcher-recommendations";
+import { recommendBriefsForResearcherAsync } from "@/lib/researcher-recommendations";
 import { aiBriefResponseSchema } from "@/lib/validations";
 import { requireUser } from "@/lib/auth-session";
 
@@ -40,7 +42,11 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
     publication_links: researcher.publication_links,
     projects,
   });
-  const recommendations = recommendBriefsForResearcher(researcher, briefs, 5);
+  const projectsSummary = buildProjectsSummaryLines(projects);
+  const recommendations = await recommendBriefsForResearcherAsync(researcher, briefs, {
+    limit: 5,
+    projectsSummary,
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] px-4 py-10">
@@ -98,7 +104,9 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
               {recommendations.length}
             </p>
             <p className="mt-2 text-sm text-gray-600">
-              Ranked by domain, skills, collaboration mode and availability.
+              {hasEmbeddingsConfigured()
+                ? "Semantic embeddings combined with domain, skills, and availability signals."
+                : "Rule-based fit (skills, domain, modes). With Groq-only config, embeddings use the same GROQ_API_KEY; Anthropic stacks need Voyage or OPENAI_API_KEY for embeddings."}
             </p>
           </article>
           <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -119,7 +127,7 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Best matches</h2>
               <p className="text-sm text-gray-600">
-                Top briefs for your profile, with a short explanation.
+                Top briefs for your profile — combined score when embeddings are configured.
               </p>
             </div>
             <Link href="/briefs" className="text-sm font-medium text-indigo-600 hover:underline">
@@ -149,8 +157,18 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
                     <p className="mt-2 text-sm leading-relaxed text-gray-700">{rec.cel_rd}</p>
                   </div>
                   <div className="shrink-0 rounded-xl bg-white px-4 py-3 text-center">
-                    <p className="text-xs text-gray-500">Match</p>
+                    <p className="text-xs text-gray-500">Combined</p>
                     <p className="text-2xl font-semibold text-indigo-700">{rec.score}/100</p>
+                    {hasEmbeddingsConfigured() ? (
+                      <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                        Rules {rec.heuristicScore}/100
+                        {" · "}
+                        Semantic{" "}
+                        {rec.semanticScore != null ? `${rec.semanticScore}/100` : "unavailable"}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs text-gray-500">Rules-only score</p>
+                    )}
                   </div>
                 </div>
                 <div className="mt-4 grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
