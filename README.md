@@ -77,6 +77,15 @@ make play-fresh
 
 Aplikacja: [http://localhost:3000](http://localhost:3000).
 
+### Konta i role (nowe)
+
+- Rejestracja: `/auth/sign-up`
+- Logowanie: `/auth/sign-in`
+- Role kont:
+  - `company` -> panel firmy (`/company/new-brief`, zarzadzanie aplikacjami)
+  - `researcher` -> rejestracja profilu i aplikowanie (`/researcher/register`, `/researcher/apply/[briefId]`)
+- Dla kont badacza wymagany jest e-mail instytucjonalny (uczelniany), co pelni role potwierdzenia afiliacji.
+
 Jeśli coś „stoi” na porcie albo chcesz czyścić dane:
 
 ```bash
