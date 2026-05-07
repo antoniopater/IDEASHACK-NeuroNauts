@@ -22,7 +22,7 @@ export async function dbListPublishedBriefs(): Promise<BriefListRow[]> {
   if (isLocalJsonDb()) {
     return local.localListPublishedBriefs();
   }
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("briefs")
     .select("id, published_at, raw_input, final_content")
@@ -38,7 +38,7 @@ export async function dbListPublishedBriefsHomeLimit(limit: number): Promise<
   if (isLocalJsonDb()) {
     return local.localListPublishedBriefsLimit(limit);
   }
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("briefs")
     .select("id, raw_input, final_content")
@@ -54,7 +54,7 @@ export async function dbGetBriefFinalContent(id: string): Promise<unknown | null
     const row = await local.localGetBriefFinalContent(id);
     return row?.final_content ?? null;
   }
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("briefs")
     .select("final_content")
@@ -81,7 +81,7 @@ export async function dbGetPublicBrief(id: string): Promise<PublicBriefRow | nul
       companies: row.companies,
     };
   }
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("briefs")
     .select("id, published_at, raw_input, final_content, companies(name)")
@@ -492,7 +492,7 @@ export async function dbGetResearcherProfile(
     const r = await local.localGetResearcherProfile(id);
     return r as ResearcherProfileRow | null;
   }
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("researchers")
     .select(
@@ -511,7 +511,7 @@ export async function dbListResearcherProjectsProfile(
     const rows = await local.localListResearcherProjectsProfile(researcherId);
     return rows as ResearcherProjectProfileRow[];
   }
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("researcher_projects")
     .select("id, title, description, type, year_from, year_to")
@@ -536,7 +536,7 @@ export async function dbListApplicationsForResearcher(
   if (isLocalJsonDb()) {
     return local.localListApplicationsForResearcher(researcherId);
   }
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("applications")
     .select("id, brief_id, status, match_score, match_explanation, created_at, briefs(raw_input, final_content)")

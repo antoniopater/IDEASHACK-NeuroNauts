@@ -11,7 +11,14 @@ MVP web app (Next.js + Supabase **opcjonalnie** + model AI) łączący firmy pot
 
 ### Environment variables
 
-Utwórz plik `.env.local` w katalogu głównym projektu.
+Skopiuj template i uzupełnij wartości:
+
+```bash
+cp .env.example .env.local
+```
+
+Do publicznego repo commitujemy tylko `.env.example` (bez sekretów).  
+Prawdziwe klucze API trzymaj wyłącznie w lokalnym `.env.local`.
 
 #### Tryb Supabase (pełna wersja — dane w Postgres)
 
