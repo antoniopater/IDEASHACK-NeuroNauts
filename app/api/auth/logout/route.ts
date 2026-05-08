@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import { clearAuthSession } from "@/lib/auth-session";
+import { clearSessionCookieOnResponse } from "@/lib/auth-session";
 
-export async function POST(req: Request) {
-  await clearAuthSession();
-  return NextResponse.redirect(new URL("/", req.url));
+/** Nav uses `<Link href="...">` → GET. Set-Cookie must be on this `NextResponse` (not only `cookies()`). */
+export async function GET(request: Request) {
+  const res = NextResponse.redirect(new URL("/", request.url));
+  clearSessionCookieOnResponse(res);
+  return res;
 }
 
-export async function GET(req: Request) {
-  await clearAuthSession();
-  return NextResponse.redirect(new URL("/", req.url));
+export async function POST() {
+  const res = NextResponse.json({ ok: true });
+  clearSessionCookieOnResponse(res);
+  return res;
 }

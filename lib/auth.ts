@@ -3,8 +3,22 @@ import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 const SESSION_COOKIE = "rdbridge_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
+let devFallbackSessionSecret: string | null = null;
+
 function sessionSecret(): string {
-  return process.env.AUTH_SESSION_SECRET?.trim() || "dev-only-insecure-session-secret";
+  const fromEnv = process.env.AUTH_SESSION_SECRET?.trim();
+  if (fromEnv) return fromEnv;
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "AUTH_SESSION_SECRET must be set in production — generate with `openssl rand -base64 32` and add to your environment."
+    );
+  }
+
+  if (!devFallbackSessionSecret) {
+    devFallbackSessionSecret = randomBytes(32).toString("base64url");
+  }
+  return devFallbackSessionSecret;
 }
 
 function toBase64Url(input: Buffer | string): string {
