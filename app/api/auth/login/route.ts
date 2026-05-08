@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { dbGetUserByEmail } from "@/lib/app-db";
 import { verifyPassword } from "@/lib/auth";
-import { setAuthSession } from "@/lib/auth-session";
+import { setSessionCookieOnResponse } from "@/lib/auth-session";
 
 const bodySchema = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -24,6 +24,7 @@ export async function POST(req: Request) {
   if (!user || !verifyPassword(parsed.data.password, user.password_hash)) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
-  await setAuthSession(user.id);
-  return NextResponse.json({ ok: true, role: user.role, researcher_id: user.researcher_id ?? null });
+  const res = NextResponse.json({ ok: true, role: user.role, researcher_id: user.researcher_id ?? null });
+  setSessionCookieOnResponse(res, user.id);
+  return res;
 }

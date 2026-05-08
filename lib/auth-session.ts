@@ -20,6 +20,19 @@ export function clearSessionCookieOnResponse(res: NextResponse): void {
   res.cookies.set(getSessionCookieName(), "", clearedSessionCookieOptions());
 }
 
+/** Route handlers should set session cookie on returned `NextResponse`. */
+export function setSessionCookieOnResponse(res: NextResponse, userId: string): void {
+  res.cookies.set({
+    name: getSessionCookieName(),
+    value: createSessionToken(userId),
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: getSessionMaxAgeSeconds(),
+  });
+}
+
 export async function setAuthSession(userId: string): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set({
