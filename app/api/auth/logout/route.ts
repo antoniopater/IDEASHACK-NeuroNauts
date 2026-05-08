@@ -5,11 +5,15 @@ import { clearSessionCookieOnResponse } from "@/lib/auth-session";
 export async function GET(request: Request) {
   const res = NextResponse.redirect(new URL("/", request.url));
   clearSessionCookieOnResponse(res);
+  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.headers.set("Pragma", "no-cache");
   return res;
 }
 
 export async function POST() {
   const res = NextResponse.json({ ok: true });
   clearSessionCookieOnResponse(res);
+  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.headers.set("Pragma", "no-cache");
   return res;
 }
