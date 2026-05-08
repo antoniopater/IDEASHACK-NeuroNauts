@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { dbCreateUser } from "@/lib/app-db";
 import { hashPassword, isLikelyAcademicEmail } from "@/lib/auth";
-import { setAuthSession } from "@/lib/auth-session";
+import { setSessionCookieOnResponse } from "@/lib/auth-session";
 
 const bodySchema = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to create account." }, { status: 500 });
   }
 
-  await setAuthSession(created.userId);
-  return NextResponse.json({ ok: true, role });
+  const res = NextResponse.json({ ok: true, role });
+  setSessionCookieOnResponse(res, created.userId);
+  return res;
 }

@@ -1,5 +1,9 @@
 import { aiBriefResponseSchema } from "@/lib/brief-schema";
-import { dbListFavoriteBriefIdsForUser, dbListPublishedBriefs } from "@/lib/app-db";
+import {
+  dbListApplicationsForResearcher,
+  dbListFavoriteBriefIdsForUser,
+  dbListPublishedBriefs,
+} from "@/lib/app-db";
 import BriefsListingClient, { type BriefListItem } from "./briefs-listing-client";
 import { hasSupabasePublicConfig } from "@/lib/server-env";
 import type { Metadata } from "next";
@@ -12,12 +16,29 @@ export const metadata: Metadata = {
 
 export default async function BriefsPage() {
   if (!hasSupabasePublicConfig()) {
-    return <BriefsListingClient items={[]} favoriteBriefIds={[]} canFavorite={false} />;
+    return (
+      <BriefsListingClient
+        items={[]}
+        favoriteBriefIds={[]}
+        canFavorite={false}
+        appliedStatusByBriefId={{}}
+      />
+    );
   }
 
   const data = await dbListPublishedBriefs();
   const user = await getCurrentUser();
   const favoriteBriefIds = user ? await dbListFavoriteBriefIdsForUser(user.id) : [];
+  const appliedStatusByBriefId: Record<string, string> = {};
+
+  if (user?.role === "researcher" && user.researcher_id) {
+    const applications = await dbListApplicationsForResearcher(user.researcher_id);
+    for (const app of applications) {
+      if (app.brief_id) {
+        appliedStatusByBriefId[app.brief_id] = app.status;
+      }
+    }
+  }
 
   const items: BriefListItem[] = [];
   for (const row of data ?? []) {
@@ -35,5 +56,12 @@ export default async function BriefsPage() {
     });
   }
 
-  return <BriefsListingClient items={items} favoriteBriefIds={favoriteBriefIds} canFavorite={Boolean(user)} />;
+  return (
+    <BriefsListingClient
+      items={items}
+      favoriteBriefIds={favoriteBriefIds}
+      canFavorite={Boolean(user)}
+      appliedStatusByBriefId={appliedStatusByBriefId}
+    />
+  );
 }

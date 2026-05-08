@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 
 const SESSION_COOKIE = "rdbridge_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
@@ -16,7 +16,12 @@ function sessionSecret(): string {
   }
 
   if (!devFallbackSessionSecret) {
-    devFallbackSessionSecret = randomBytes(32).toString("base64url");
+    // In Next.js dev, route handlers and server components can run in separate
+    // processes. Use a deterministic fallback so cookies signed in one context
+    // verify in another when AUTH_SESSION_SECRET is not configured locally.
+    devFallbackSessionSecret = createHash("sha256")
+      .update(`nexdoc-dev-session-secret:${process.cwd()}`)
+      .digest("base64url");
   }
   return devFallbackSessionSecret;
 }

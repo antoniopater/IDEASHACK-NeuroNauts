@@ -38,6 +38,13 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
   ]);
   const favoriteBriefRows = await dbListFavoriteBriefsForUser(user.id);
 
+  const applicationsByBriefId = new Map(
+    applications.map((app) => [
+      app.brief_id,
+      { status: app.status, matchScore: app.match_score ?? null, applicationId: app.id },
+    ])
+  );
+
   const classification = classifyResearcher({
     stage: researcher.stage,
     research_description: researcher.research_description,
@@ -174,7 +181,12 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
                     <p className="mt-2 text-sm leading-relaxed text-gray-700">{rec.cel_rd}</p>
                   </div>
                   <div className="shrink-0 rounded-xl bg-white px-4 py-3 text-center">
-                    <p className="text-xs text-gray-500">Combined</p>
+                    <p
+                      className="text-xs text-gray-500"
+                      title="Predicted match before applying — based on rules and semantic similarity to your profile."
+                    >
+                      Predicted match
+                    </p>
                     <p className="text-2xl font-semibold text-indigo-700">{rec.score}/100</p>
                     {hasEmbeddingsConfigured() ? (
                       <p className="mt-1 text-xs leading-relaxed text-gray-500">
@@ -207,12 +219,30 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <Link
-                    href={`/researcher/apply/${rec.briefId}`}
-                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-                  >
-                    Apply
-                  </Link>
+                  {(() => {
+                    const existing = applicationsByBriefId.get(rec.briefId);
+                    if (existing) {
+                      return (
+                        <span
+                          className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700"
+                          title={`You applied to this brief. AI evaluated your application at ${existing.matchScore ?? "—"}/100.`}
+                        >
+                          Already applied
+                          <span className="rounded-full bg-white px-2 py-0.5 text-xs text-indigo-700">
+                            {statusLabel[existing.status] ?? existing.status}
+                          </span>
+                        </span>
+                      );
+                    }
+                    return (
+                      <Link
+                        href={`/researcher/apply/${rec.briefId}`}
+                        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                      >
+                        Apply
+                      </Link>
+                    );
+                  })()}
                   <Link
                     href={`/briefs/${rec.briefId}`}
                     className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
@@ -252,8 +282,11 @@ export default async function ResearcherDashboardPage({ params }: PageProps) {
                       <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
                         {statusLabel[app.status] ?? app.status}
                       </span>
-                      <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700">
-                        {app.match_score ?? "—"}/100
+                      <span
+                        className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700"
+                        title="AI score evaluated when you submitted the application (based on full LLM judgement, not rules-only heuristic)."
+                      >
+                        AI score · {app.match_score ?? "—"}/100
                       </span>
                     </div>
                   </div>
