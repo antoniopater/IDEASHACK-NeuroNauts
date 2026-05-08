@@ -1,0 +1,72 @@
+import { aiBriefResponseSchema, deriveBriefTitle } from "@/lib/brief-schema";
+import { dbGetBriefForCompany, dbListApplicationsForBrief } from "@/lib/app-db";
+import { hasSupabaseServiceConfig } from "@/lib/server-env";
+import type { Metadata } from "next";
+import type { ApplicationRow } from "@/lib/application-row";
+import ApplicationsManageClient from "./applications-manage-client";
+import { getCurrentUser } from "@/lib/auth-session";
+
+export const metadata: Metadata = {
+  robots: "noindex, nofollow",
+};
+
+export default async function CompanyBriefApplicationsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ token?: string }>;
+}) {
+  const { id } = await params;
+  const { token } = await searchParams;
+
+  if (!hasSupabaseServiceConfig()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
+        <p className="text-red-600">Database is not configured (Supabase or local JSON mode).</p>
+      </div>
+    );
+  }
+
+  const brief = await dbGetBriefForCompany(id);
+  const user = await getCurrentUser();
+  const byAccount = Boolean(user?.role === "company" && user.company_id && brief?.company_id === user.company_id);
+  const byToken = Boolean(token && brief?.company_access_token && brief.company_access_token === token);
+
+  if (!brief || (!byAccount && !byToken)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
+        <p className="text-gray-700 text-center max-w-md">
+          This link is invalid or you do not have access to this brief.
+        </p>
+      </div>
+    );
+  }
+
+  const fc = aiBriefResponseSchema.safeParse(brief.final_content);
+  const briefTitle = fc.success ? deriveBriefTitle(fc.data.cel_rd) : "Brief";
+
+  const rawApps = await dbListApplicationsForBrief(id);
+
+  if (rawApps === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
+        <p className="text-red-600">Could not load applications.</p>
+      </div>
+    );
+  }
+
+  const applications = rawApps as ApplicationRow[];
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-[family-name:var(--font-geist-sans)] py-10 px-4">
+      <div className="max-w-4xl mx-auto">
+        <header className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900">Brief applications</h1>
+          <p className="text-sm text-gray-600 mt-1">{briefTitle}</p>
+        </header>
+        <ApplicationsManageClient briefId={id} token={token ?? ""} applications={applications} />
+      </div>
+    </div>
+  );
+}
